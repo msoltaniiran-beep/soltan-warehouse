@@ -171,7 +171,6 @@
     <h2>انبارگردانی سلطان</h2>
     
     <div class="toolbar">
-      <button class="secondary" onclick="changeScanner()">🔄 تغییر اسکنر</button>
       <div>
         <label>📍 محل:</label>
         <div class="custom-select-container">
@@ -182,7 +181,7 @@
       </div>
     </div>
 
-    <button onclick="startScan()" class="scan">📸 اسکن بارکد</button>
+    <button onclick="startScan()" class="scan">📸 اسکن بارکد (دوربین داخلی)</button>
     <p style="text-align:center; margin:8px 0;">یا</p>
     <input type="text" id="barcode" placeholder="بارکد را وارد کنید" autofocus />
     <button onclick="searchOrAdd()">🔍 جستجو / افزودن</button>
@@ -235,7 +234,7 @@
   <div id="cameraModal" class="modal hidden">
     <div class="modal-content" style="padding:0; max-width:100%; width:100%; max-height:100%;">
       <div style="position:relative; background:#000;">
-        <video id="cameraVideo" playsinline autoplay></video>
+        <video id="cameraVideo" playsinline></video>
         <div class="scanner-frame"></div>
       </div>
       <div style="padding:16px; text-align:center;">
@@ -335,22 +334,6 @@
     </div>
   </div>
 
-  <!-- مدال خطا -->
-  <div id="installModal" class="modal hidden">
-    <div class="modal-content" style="max-width:350px; text-align:center;">
-      <h3 style="color:#d32f2f;">❗ اسکنر باز نشد</h3>
-      <p style="margin:12px 0;">برنامهٔ «<span id="appNameHere">Gamma Barcode Scanner</span>» روی دستگاه شما نصب نیست یا پاسخ نمی‌دهد.</p>
-      <p style="font-size:14px; margin:10px 0;">
-        ✅ لطفاً یکی از این کارها را انجام دهید:
-      </p>
-      <div style="margin-top:15px; display:flex; gap:8px; flex-direction:column;">
-        <button id="manualInstallBtn" style="background:#4CAF50; padding:12px;">📲 نصب دستی از گوگل‌پلی</button>
-        <button id="useCameraBtn" style="background:#2196f3; padding:12px;">📱 استفاده از دوربین گوشی</button>
-        <button onclick="closeInstallModal()" class="secondary" style="padding:12px;">❌ بستن و ادامهٔ کار</button>
-      </div>
-    </div>
-  </div>
-
   <!-- مدال ماشین‌حساب -->
   <div id="calcModal" class="modal hidden">
     <div class="modal-content">
@@ -386,8 +369,11 @@
     let currentEditIndex = -1;
     let currentDropdown = null;
     let DEVICE_NAME = localStorage.getItem('deviceName') || '';
-    let LAST_SCAN_METHOD = localStorage.getItem('scanner') || 'camera';
-    let CURRENT_CALC_TARGET = null;
+    let barcodeDetector = null;
+    let videoStream = null;
+    let scanInterval = null;
+    let lastScannedValue = '';
+    let lastScanTime = 0;
 
     // تنظیم نام دستگاه
     if (!DEVICE_NAME) {
@@ -403,19 +389,6 @@
       DEVICE_NAME = name ? `${suggested} – ${name}` : suggested;
       localStorage.setItem('deviceName', DEVICE_NAME);
     }
-
-    const SCANNERS = [
-      { id: 'camera', name: '📸 اسکن با دوربین (داخلی)', desc: 'بدون نیاز به نصب برنامه — پشتیبانی از بارکد خطی و QR' },
-      { id: 'gamma', name: 'Gamma Barcode Scanner', desc: 'سریع، بدون تبلیغ، پشتیبانی از Batch Scan',
-        intent: 'intent://scan/#Intent;scheme=scan;package=com.gamma.scan;end;',
-        playUrl: 'https://play.google.com/store/apps/details?id=com.gamma.scan' },
-      { id: 'zxing', name: 'ZXing Barcode Scanner', desc: 'رایگان، پایدار و پرکاربرد', 
-        intent: 'intent://scan/#Intent;scheme=zxing;package=com.google.zxing.client.android;end;',
-        playUrl: 'https://play.google.com/store/apps/details?id=com.google.zxing.client.android' },
-      { id: 'easy', name: 'Easy Barcode Scanner', desc: 'رابط کاربری ساده',
-        intent: 'intent://scan/#Intent;scheme=scan;package=com.tecace.easybarcodescanner;end;',
-        playUrl: 'https://play.google.com/store/apps/details?id=com.tecace.easybarcodescanner' }
-    ];
 
     // === توابع ماشین‌حساب ===
     function openCalc(targetInputId) {
@@ -433,6 +406,8 @@
       const disp = document.getElementById('calcDisplay');
       disp.value = disp.value.slice(0, -1);
     }
+
+    let CURRENT_CALC_TARGET = null;
 
     function calcApply() {
       const expr = document.getElementById('calcDisplay').value;
@@ -465,78 +440,75 @@
       CURRENT_CALC_TARGET = null;
     }
 
-    // === 🆕 اسکن داخلی با پشتیبانی از بارکد خطی (BarcodeDetector API) ===
-    let barcodeDetector = null;
-    let videoStream = null;
-    let scanInterval = null;
-
+    // === ✅ اسکن داخلی — فقط دوربین، بدون هیچ فالبکی ===
     async function startCameraScan() {
       const video = document.getElementById('cameraVideo');
       const modal = document.getElementById('cameraModal');
 
-      // ✅ بررسی پشتیبانی از BarcodeDetector
       if (!("BarcodeDetector" in window)) {
-        console.warn("BarcodeDetector not supported → falling back to Gamma");
-        launchExternalScanner('gamma');
+        alert("❌ مرورگر شما از اسکن بارکد پشتیبانی نمی‌کند.\nلطفاً از Chrome 83+ یا Edge استفاده کنید.");
         return;
       }
 
       try {
-        // ✅ دریافت دوربین (environment = دوربین پشت)
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "environment",
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            frameRate: { ideal: 30 }
+          }
         });
         videoStream = stream;
         video.srcObject = stream;
 
-        // ✅ پشتیبانی از همه فرمت‌های رایج (خطی + QR)
         barcodeDetector = new BarcodeDetector({
           formats: [
-            'qr_code',
-            'ean_13', 'ean_8',
-            'upc_a', 'upc_e',
-            'code_128', 'code_39', 'code_93',
-            'itf', 'codabar'
+            'qr_code', 'ean_13', 'ean_8', 'upc_a', 'upc_e',
+            'code_128', 'code_39', 'code_93', 'itf', 'codabar'
           ]
         });
 
         modal.classList.remove('hidden');
 
-        // ✅ اسکن مداوم (هر 300ms)
+        video.onloadedmetadata = () => {
+          video.play().catch(e => console.warn("Video play failed:", e));
+        };
+
+        // 🔍 اسکن پرسرعت + debounce
         scanInterval = setInterval(async () => {
-          if (!barcodeDetector || !video.srcObject || video.paused || video.ended) return;
+          if (!barcodeDetector || !video.srcObject || video.paused || video.ended || video.readyState < 2) return;
+
           try {
             const barcodes = await barcodeDetector.detect(video);
             if (barcodes.length > 0) {
-              const result = barcodes[0].rawValue?.trim();
-              if (result) {
-                clearInterval(scanInterval);
-                scanInterval = null;
-                stopCamera(); // ✅ فوری متوقف شود
+              const value = (barcodes[0].rawValue || '').trim();
+              if (!value || value.length < 4) return; // ✅ فیلتر طول
 
-                // ✅ مقدار را وارد کن و جستجو را اجرا کن
-                const barcodeInput = document.getElementById('barcode');
-                barcodeInput.value = result;
-                barcodeInput.focus();
-                barcodeInput.select();
-                requestAnimationFrame(() => setTimeout(() => searchOrAdd(), 10));
-              }
+              const now = Date.now();
+              if (value === lastScannedValue && now - lastScanTime < 1500) return; // ✅ debounce
+
+              lastScannedValue = value;
+              lastScanTime = now;
+
+              clearInterval(scanInterval);
+              scanInterval = null;
+              stopCamera();
+
+              const barcodeInput = document.getElementById('barcode');
+              barcodeInput.value = value;
+              barcodeInput.focus();
+              barcodeInput.select();
+              setTimeout(() => searchOrAdd(), 50);
             }
           } catch (err) {
-            console.error("[BarcodeDetector] Error:", err.message || err);
-            // fallback در صورت خطا
-            clearInterval(scanInterval);
-            scanInterval = null;
-            stopCamera();
-            alert("❌ خطا در اسکن داخلی. استفاده از Gamma Scanner...");
-            launchExternalScanner('gamma');
+            console.error("[Scan] Internal error:", err.message || err);
           }
-        }, 300);
+        }, 100); // ✅ 10x faster
 
       } catch (err) {
-        console.error("[Camera] Access denied or unsupported:", err);
-        alert("❌ دسترسی به دوربین رد شد یا پشتیبانی نمی‌شود.\nاستفاده از Gamma Scanner...");
-        launchExternalScanner('gamma');
+        console.error("[Camera] Access error:", err);
+        alert("❌ دسترسی به دوربین رد شد یا پشتیبانی نمی‌شود.\nلطفاً دسترسی را فعال کنید.");
       }
     }
 
@@ -557,64 +529,14 @@
       barcodeDetector = null;
 
       const video = document.getElementById('cameraVideo');
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach(t => t.stop());
+      }
       video.srcObject = null;
     }
 
-    // === اسکنر خارجی (Gamma / ZXing / Easy) ===
-    function launchExternalScanner(scannerId) {
-      const scanner = SCANNERS.find(s => s.id === scannerId && s.intent);
-      if (!scanner) {
-        startCameraScan();
-        return;
-      }
-
-      // ارسال intent (فقط در اندروید)
-      let opened = false;
-      try {
-        const w = window.open(scanner.intent, '_self');
-        if (w) opened = true;
-      } catch (e) { /* silent */ }
-
-      setTimeout(() => {
-        if (!opened) {
-          document.getElementById('appNameHere').textContent = scanner.name;
-          document.getElementById('manualInstallBtn').onclick = () => {
-            window.open(scanner.playUrl, '_blank');
-            closeInstallModal();
-          };
-          document.getElementById('useCameraBtn').onclick = () => {
-            closeInstallModal();
-            LAST_SCAN_METHOD = 'camera';
-            localStorage.setItem('scanner', 'camera');
-            startCameraScan();
-          };
-          document.getElementById('installModal').classList.remove('hidden');
-        }
-      }, 700);
-    }
-
     function startScan() {
-      if (LAST_SCAN_METHOD === 'camera') {
-        startCameraScan();
-      } else {
-        launchExternalScanner(LAST_SCAN_METHOD);
-      }
-    }
-
-    function changeScanner() {
-      let msg = 'لطفاً روش اسکن را انتخاب کنید:\n\n';
-      SCANNERS.forEach((s, i) => {
-        msg += `${i+1} → ${s.name}\n   ${s.desc}\n`;
-      });
-      msg += `\nشماره را وارد کنید (پیش‌فرض: 1):`;
-
-      const choice = prompt(msg, '1');
-      const idx = Math.max(0, parseInt(choice) - 1);
-      const selected = SCANNERS[idx] || SCANNERS[0];
-
-      LAST_SCAN_METHOD = selected.id;
-      localStorage.setItem('scanner', selected.id);
-      alert(`✅ روش اسکن: ${selected.name}`);
+      startCameraScan(); // ✅ فقط اسکن داخلی — بدون رفتن به Gamma یا هر برنامه‌ای
     }
 
     // === محاسبه مغایرت ===
@@ -719,7 +641,7 @@
       document.getElementById('addBarcode').value = bc;
       document.getElementById('addLocation').value = loc;
       document.getElementById('addStock').value = stock;
-      document.getElementById('addCount1').value = stock; // ✅ فقط در افزودن: موجودی → شمارش۱
+      document.getElementById('addCount1').value = stock;
       document.getElementById('addCount2').value = '';
       document.getElementById('addTag').value = '';
       document.getElementById('addTeam').value = '';
@@ -769,7 +691,7 @@
       document.getElementById('editBarcode').value = r[0];
       document.getElementById('editName').value = r[1];
       document.getElementById('editStock').value = stock;
-      document.getElementById('editCount1').value = r[2] || '';   // ✅ اصلاح: مقدار واقعی شمارش۱
+      document.getElementById('editCount1').value = r[2] || '';
       document.getElementById('editCount2').value = r[4] != null ? r[4] : '';
       document.getElementById('editTag').value = r[6] || '';
       document.getElementById('editTeam').value = r[7] || '';
@@ -956,10 +878,10 @@
         dupMap[key] = (dupMap[key] || 0) + 1;
       });
 
-      t.innerHTML = data.map((row, _) => {
+      t.innerHTML = data.map((row, idx) => {
         const key = `${row[0]}|${row[8]}`;
         const isDup = dupMap[key] > 1;
-        const idx = items.findIndex(r => r[0] === row[0] && r[8] === row[8]);
+        const realIdx = items.findIndex(r => r[0] === row[0] && r[8] === row[8]);
 
         return `<tr>
           <td${isDup ? ' class="duplicate"' : ''}>${row[0]}</td>
@@ -976,8 +898,8 @@
           <td>${row[11]}</td>
           <td>${row[12]}</td>
           <td class="actions">
-            <button class="btn-icon" style="background:#1976d2;" onclick="openEditModal(${idx})">✏️</button>
-            <button class="btn-icon danger" onclick="removeItem(${idx})">🗑️</button>
+            <button class="btn-icon" style="background:#1976d2;" onclick="openEditModal(${realIdx})">✏️</button>
+            <button class="btn-icon danger" onclick="removeItem(${realIdx})">🗑️</button>
           </td>
         </tr>`;
       }).join('');
@@ -1003,10 +925,6 @@
       const headers = ['بارکد','نام کالا','شمارش۱','مغایرت۱','شمارش۲','مغایرت۲','تگ','تیم','محل','موجودی','توضیحات','آخرین بروزرسانی','دستگاه'];
       const f = document.getElementById('filterRow');
       f.innerHTML = headers.map((_,i)=>`<th><input type="text" class="filter-input" data-col="${i}" placeholder="فیلتر..." oninput="applyFilters()"></th>`).join('') + '<th></th>';
-    }
-
-    function closeInstallModal() {
-      document.getElementById('installModal').classList.add('hidden');
     }
 
     // === راه‌اندازی اولیه ===
@@ -1054,7 +972,7 @@
         }
       });
 
-      // پردازش اسکن خارجی (URL parameters)
+      // پردازش اسکن خارجی (URL parameters) — برای سازگاری با Gamma در آینده
       const params = new URLSearchParams(window.location.search);
       const bc = params.get('SCAN_RESULT')?.trim() || 
                  params.get('barcode')?.trim() || 
@@ -1071,7 +989,7 @@
       }
     });
 
-    console.log('✅ انبارگردانی سلطان — اسکن داخلی اکنون بارکد خطی و QR را پشتیبانی می‌کند.');
+    console.log('✅ انبارگردانی سلطان — اسکن داخلی فقط با دوربین. بدون fallback.');
   </script>
 
   <!-- ✅ XLSX برای import/export -->
