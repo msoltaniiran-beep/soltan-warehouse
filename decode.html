@@ -1,4 +1,4 @@
-دقت اسکنر با دوربین داخلی کم هست و سریع کد رو ناقص می خونه و ارسال می کنه می خوام دقت فوق العاده بالا باشه <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8" />
@@ -415,10 +415,10 @@
       { id: 'camera', name: '📸 اسکن با دوربین (داخلی)', desc: 'پشتیبانی از Code 128 و Free 3 of 9 — fallback به Gamma در صورت نیاز' },
       { id: 'gamma', name: 'Gamma Barcode Scanner', desc: 'بهترین گزینه برای Code 128 / Extended Code 39 — Batch Scan',
         intent: 'intent://scan/#Intent;scheme=scan;package=com.gamma.scan;end;',
-        playUrl: 'https://play.google.com/store/apps/details?id=com.gamma.scan  ' },
+        playUrl: 'https://play.google.com/store/apps/details?id=com.gamma.scan' },
       { id: 'zxing', name: 'ZXing Barcode Scanner', desc: 'رایگان، پایدار و پرکاربرد', 
         intent: 'intent://scan/#Intent;scheme=zxing;package=com.google.zxing.client.android;end;',
-        playUrl: 'https://play.google.com/store/apps/details?id=com.google.zxing.client.android  ' }
+        playUrl: 'https://play.google.com/store/apps/details?id=com.google.zxing.client.android' }
     ];
 
     // === ماشین‌حساب ===
@@ -464,7 +464,7 @@
       // بارگذاری Quagga2 (فقط اولین بار)
       if (!window.Quagga) {
         const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.3.0/dist/quagga.min.js  ';
+        script.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.3.0/dist/quagga.min.js';
         document.head.appendChild(script);
         await new Promise((resolve) => {
           script.onload = resolve;
@@ -961,6 +961,6 @@
   </script>
 
   <!-- XLSX برای import/export -->
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js  "></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
 </html>
