@@ -508,9 +508,22 @@
 
         if (qrScanner) qrScanner.destroy();
         qrScanner = new QrScanner(video, result => {
-          stopCamera();
-          document.getElementById('barcode').value = result.trim();
-          setTimeout(searchOrAdd, 300);
+          const trimmed = result.trim();
+          if (!trimmed) return;
+
+          // ✅ 1. کد را در فیلد بارکد قرار بده
+          const barcodeInput = document.getElementById('barcode');
+          barcodeInput.value = trimmed;
+          barcodeInput.focus();
+          barcodeInput.select();
+
+          // ✅ 2. بلافاصله (اما پس از render) پنجره را ببند و ادامه بده
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              stopCamera(); // ✅ پنجره اسکن همزمان و فوراً بسته می‌شود
+              searchOrAdd(); // ✅ بدون تأخیر
+            }, 10);
+          });
         }, {
           highlightScanRegion: true,
           highlightCodeOutline: true
@@ -678,7 +691,7 @@
       document.getElementById('addBarcode').value = bc;
       document.getElementById('addLocation').value = loc;
       document.getElementById('addStock').value = stock;
-      document.getElementById('addCount1').value = stock; // ✅ پیش‌فرض: موجودی → شمارش۱
+      document.getElementById('addCount1').value = stock; // ✅ فقط در افزودن: موجودی → شمارش۱
       document.getElementById('addCount2').value = '';
       document.getElementById('addTag').value = '';
       document.getElementById('addTeam').value = '';
@@ -720,6 +733,7 @@
       document.getElementById('addModal').classList.add('hidden');
     }
 
+    // ✅ تابع openEditModal — اصلاح شده: شمارش۱ از موجودی پر نمی‌شود
     function openEditModal(idx) {
       currentEditIndex = idx;
       const r = items[idx];
@@ -728,8 +742,8 @@
       document.getElementById('editBarcode').value = r[0];
       document.getElementById('editName').value = r[1];
       document.getElementById('editStock').value = stock;
-      document.getElementById('editCount1').value = stock; // ✅ پیش‌فرض: موجودی → شمارش۱
-      document.getElementById('editCount2').value = r[4] || '';
+      document.getElementById('editCount1').value = r[2] || '';   // ✅ اصلاح: مقدار واقعی شمارش۱ از جدول
+      document.getElementById('editCount2').value = r[4] != null ? r[4] : '';
       document.getElementById('editTag').value = r[6] || '';
       document.getElementById('editTeam').value = r[7] || '';
       document.getElementById('editLocation').value = r[8] || '';
@@ -1013,16 +1027,27 @@
         }
       });
 
-      // پردازش اسکن خارجی
-      const p = new URLSearchParams(window.location.search);
-      const bc = p.get('SCAN_RESULT') || p.get('barcode') || p.get('contents') || p.get('result');
+      // پردازش اسکن خارجی — ✅ همراه با پاک کردن پارامتر و فراخوانی فوری
+      const params = new URLSearchParams(window.location.search);
+      const bc = params.get('SCAN_RESULT')?.trim() || 
+                 params.get('barcode')?.trim() || 
+                 params.get('contents')?.trim() || 
+                 params.get('result')?.trim();
+
       if (bc) {
-        document.getElementById('barcode').value = bc.trim();
-        setTimeout(searchOrAdd, 300);
+        const barcodeInput = document.getElementById('barcode');
+        barcodeInput.value = bc;
+        barcodeInput.focus();
+        barcodeInput.select();
+
+        // پاک کردن پارامتر از URL بدون رفرش
+        history.replaceState(null, '', location.pathname);
+
+        searchOrAdd(); // ✅ فوری
       }
     });
 
-    console.log('✅ کد کامل و نهایی — آمادهٔ استفاده');
+    console.log('✅ کد نهایی — اصلاحات اعمال شد: ویرایش (شمارش۱ از موجودی پر نمی‌شود) + اسکن (پنجره همزمان بسته می‌شود)');
   </script>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
