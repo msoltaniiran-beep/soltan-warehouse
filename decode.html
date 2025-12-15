@@ -5,7 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>انبارگردانی سلطان</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Vazir', 'IRANSans', Tahoma, sans-serif; -webkit-font-smoothing: antialiased; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Vazir', 'IRANSans', Tahoma, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
     body { background: #f9fafb; padding: 12px; }
     .card { background: white; border-radius: 12px; padding: 16px; margin: 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     input, select, textarea, button {
@@ -19,7 +25,6 @@
     button.secondary { background: #757575; }
     button.danger { background: #c62828; }
     .hidden { display: none; }
-
     .table-container {
       overflow-x: auto;
       max-height: 350px;
@@ -33,14 +38,11 @@
     .table thead tr:nth-child(2) th { background: #f1f8e9; padding: 4px; }
     .discrepancy { font-weight: bold; color: #c62828; }
     .duplicate { background-color: #ffebee !important; }
-    .tag-location-dup { background-color: #fce4ec !important; } /* صورتی برای تگ+محل تکراری */
     .actions { text-align: center; white-space: nowrap; }
     .btn-icon { width: auto; padding: 5px 10px; font-size: 14px; margin: 2px; }
-
     h2, h3 { text-align: center; color: #2e7d32; margin-bottom: 12px; }
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
     .toolbar > * { flex: 1; min-width: 160px; }
-
     .tabs { display: flex; gap: 6px; margin-bottom: 16px; }
     .tab-btn {
       flex: 1;
@@ -55,12 +57,34 @@
     .tab-btn.active { background: #2e7d32; color: white; }
     .tab-content { display: none; padding-top: 16px; border-top: 2px solid #2e7d32; }
     .tab-content.active { display: block; }
-
-    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: white; border-radius: 16px; padding: 20px; width: 95%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-
-    .custom-select-container { position: relative; width: 100%; }
-    .custom-select-container input { padding-right: 36px; }
+    .modal {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      width: 95%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .modal.hidden { display: none; }
+    .filter-input { width: 100% !important; font-size: 12px !important; padding: 4px 6px !important; }
+    .custom-select-container {
+      position: relative;
+      width: 100%;
+    }
+    .custom-select-container input {
+      padding-right: 36px;
+    }
     .select-arrow {
       position: absolute;
       right: 12px;
@@ -94,160 +118,183 @@
     }
     .custom-select-option:hover { background: #f0f8f0; }
     .custom-select-option:last-child { border-bottom: none; }
-
-    /* ماشین‌حساب — بزرگ‌تر */
+    #cameraVideo {
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+      background: #000;
+      display: block;
+    }
+    .scanner-frame {
+      position: absolute;
+      top: 25%;
+      left: 10%;
+      width: 80%;
+      height: 50%;
+      border: 3px solid #2196f3;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.6);
+      pointer-events: none;
+      border-radius: 4px;
+    }
+    .scan-hint {
+      position: absolute;
+      top: 8%;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      color: white;
+      font-size: 16px;
+      text-shadow: 0 1px 4px #000;
+      padding: 0 20px;
+      pointer-events: none;
+    }
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 100;
+    }
+    .zoom-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.85);
+      border: none;
+      font-size: 24px;
+      font-weight: bold;
+      color: #1976d2;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+    /* ✅ ماشین‌حساب — بزرگ‌تر، عدد در مرکز، فقط عددی */
     .calc-btn { 
-      background: #e0e0e0; color: #333; padding: 16px 0; margin: 4px;
-      font-size: 22px; font-weight: bold; border-radius: 12px; border: 1px solid #bbb;
-      width: 22%; height: 56px; display: flex; justify-content: center; align-items: center;
+      background: #e0e0e0; 
+      color: #333; 
+      padding: 16px 0;
+      margin: 4px;
+      font-size: 22px;
+      font-weight: bold;
+      border-radius: 12px;
+      border: 1px solid #bbb;
+      width: 22%;
+      height: 56px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       box-shadow: 0 3px 6px rgba(0,0,0,0.1);
     }
     .calc-display {
-      width: 100%; padding: 16px; margin: 8px 0; text-align: left; direction: ltr;
-      font-size: 22px; background: #fff; border: 1px solid #ccc; border-radius: 8px;
+      width: 100%;
+      padding: 16px;
+      margin: 8px 0;
+      text-align: left;
+      direction: ltr;
+      font-size: 22px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
     }
     .calc-apply {
-      background: #2e7d32 !important; width: 100% !important; padding: 18px !important;
-      margin-top: 14px; font-size: 20px; border-radius: 10px;
+      background: #2e7d32 !important;
+      width: 100% !important;
+      padding: 18px !important;
+      margin-top: 14px;
+      font-size: 20px;
+      border-radius: 10px;
     }
-
     .report-card { background: #fff8e1; border-left: 4px solid #ffa000; }
     .report-card h4 { color: #e65100; margin-bottom: 10px; }
-
-    /* فیلتر گزارش */
-    .report-filter { margin: 10px 0; display: flex; flex-wrap: wrap; gap:8px; }
-    .report-filter select { flex: 1; min-width: 120px; font-size:14px; }
+    /* مدال‌ها */
+    .modal-content { border-radius: 16px; }
   </style>
 </head>
 <body>
   <div class="card">
     <h2>انبارگردانی سلطان</h2>
-
     <div class="tabs" id="tabsContainer">
       <button class="tab-btn active" data-tab="main">عملیات</button>
       <button class="tab-btn" data-tab="reports">📊 گزارشات</button>
       <button class="tab-btn" data-tab="settings">⚙️ تنظیمات</button>
     </div>
-
     <!-- Tab: عملیات -->
     <div class="tab-content active" id="tab-main">
-      <!-- ✅ فقط نمایش محل — readonly -->
-      <div style="margin-bottom:12px;">
-        <label>📍 محل فعلی:</label>
-        <input type="text" id="currentLocation" readonly />
-      </div>
-
-      <!-- کنترل شرطی اسکن -->
+      <!-- ✅ دکمه اسکن به‌صورت شرطی -->
       <div id="scanButtonContainer" class="toolbar">
         <button onclick="startScan()" class="scan">📸 اسکن بارکد</button>
-        <div style="flex:1;"></div> <!-- فضای خالی برای چپ‌چین -->
+        <div>
+          <label>📍 محل:</label>
+          <div class="custom-select-container">
+            <input type="text" id="globalLocation" placeholder="محل را انتخاب یا تایپ کنید..." autocomplete="off" readonly />
+            <div class="custom-select-dropdown hidden" id="locationDropdown"></div>
+            <span class="select-arrow" onclick="toggleLocationDropdown('main')">▼</span>
+          </div>
+        </div>
       </div>
-
-      <!-- فیلد جستجو + کشوی تگ/محل -->
-      <input type="text" id="searchInput" placeholder="بارکد یا تگ را وارد کنید" autofocus 
-             onfocus="maybeShowLocationDropdown()" onblur="hideLocationDropdown()" />
-
-      <!-- کشوی محل (فقط هنگام focus روی searchInput یا addTag) -->
-      <div class="custom-select-container" style="position:relative; margin-top:6px;">
-        <div class="custom-select-dropdown hidden" id="searchLocationDropdown"></div>
-      </div>
-
+      <!-- ✅ فیلد جستجو — به‌صورت شرطی: بارکد یا تگ -->
+      <input type="text" id="searchInput" placeholder="بارکد را وارد کنید" autofocus />
       <button onclick="searchOrAdd()">🔍 جستجو / افزودن</button>
     </div>
-
     <!-- Tab: گزارشات -->
     <div class="tab-content" id="tab-reports">
       <h3>📊 گزارش مغایرت‌ها</h3>
-
-      <div class="report-filter">
-        <input type="text" id="reportGlobalSearch" placeholder="🔍 جستجو در مغایرت‌ها..." oninput="applyReportFilters()" />
-        <select id="reportSearchColumn" onchange="applyReportFilters()">
-          <option value="all">همه ستون‌ها</option>
-          <option value="0">بارکد</option>
-          <option value="1">نام کالا</option>
-          <option value="6">تگ</option>
-          <option value="7">تیم</option>
-          <option value="8">محل</option>
-          <option value="9">موجودی</option>
-          <option value="10">توضیحات</option>
-        </select>
-      </div>
-
       <div class="report-card">
         <h4>🔴 مغایرت‌های شمارش ۱ (غیرصفر)</h4>
-        <div class="table-container">
-          <table class="table" id="disc1Table">
-            <thead><tr><th>بارکد</th><th>نام</th><th>تگ</th><th>محل</th><th>موجودی</th><th>شمارش۱</th><th>مغایرت</th></tr></thead>
-            <tbody><tr><td colspan="7" style="text-align:center;">در حال بارگذاری...</td></tr></tbody>
-          </table>
+        <div id="discrepancy1List" style="max-height:200px; overflow-y:auto;">
+          <p style="text-align:center; color:#666;">در حال بارگذاری...</p>
         </div>
       </div>
-
       <div class="report-card" style="margin-top:16px;">
         <h4>🟠 مغایرت‌های شمارش ۲ (غیرصفر)</h4>
-        <div class="table-container">
-          <table class="table" id="disc2Table">
-            <thead><tr><th>بارکد</th><th>نام</th><th>تگ</th><th>محل</th><th>موجودی</th><th>شمارش۲</th><th>مغایرت</th></tr></thead>
-            <tbody><tr><td colspan="7" style="text-align:center;">در حال بارگذاری...</td></tr></tbody>
-          </table>
+        <div id="discrepancy2List" style="max-height:200px; overflow-y:auto;">
+          <p style="text-align:center; color:#666;">در حال بارگذاری...</p>
         </div>
       </div>
-
       <button onclick="exportDiscrepancies()" style="width:100%; margin-top:16px; background:#d32f2f;">📤 خروجی مغایرت‌ها (اکسل)</button>
     </div>
-
     <!-- Tab: تنظیمات -->
     <div class="tab-content" id="tab-settings">
       <h3>⚙️ تنظیمات سیستم</h3>
-
       <label>👤 نام کاربر:</label>
       <input type="text" id="settingUserName" placeholder="نام شما" />
-
       <label>👥 نام تیم (پیش‌فرض):</label>
       <input type="text" id="settingTeamName" placeholder="مثلاً: تیم الف" />
-
-      <label>📍 محل پیش‌فرض:</label>
+      <label>📍 محل پیش‌فرض (نمایش در عملیات):</label>
       <div class="custom-select-container">
-        <input type="text" id="settingLocation" placeholder="محل را انتخاب یا وارد کنید..." autocomplete="off" />
-        <div class="custom-select-dropdown hidden" id="settingLocationDropdown"></div>
+        <input type="text" id="settingDefaultLocation" placeholder="محل پیش‌فرض را وارد کنید" autocomplete="off" />
+        <div class="custom-select-dropdown hidden" id="settingsLocationDropdown"></div>
         <span class="select-arrow" onclick="toggleLocationDropdown('settings')">▼</span>
       </div>
-
       <label>🔢 حداقل طول بارکد:</label>
       <input type="number" id="settingMinLength" min="4" max="50" value="14" />
-
       <label>🔢 حداکثر طول بارکد:</label>
       <input type="number" id="settingMaxLength" min="4" max="50" value="20" />
-
       <label class="secondary" style="margin-top:16px;">
         <input type="checkbox" id="searchByTag" /> 
         🔍 جستجو بر اساس تگ (به‌جای بارکد)
       </label>
-      <p style="font-size:13px; color:#555; margin-top:4px; background:#f1f8e9; padding:8px; border-radius:6px;">
-        🏷️ «تگ» = شماره تگ کاغذی نصب‌شده روی محل دپو کالا (مثال: T-105)
+      <p style="font-size:13px; color:#555; margin-top:4px;">
+        در این حالت، فیلد جستجو به «تگ» تغییر می‌کند و دکمه اسکن پنهان می‌شود.
       </p>
-
       <h4 style="margin:20px 0 8px;">🔄 تغییر روش اسکن</h4>
       <button onclick="changeScanner()" class="secondary" style="width:100%;">🔄 تغییر اسکنر</button>
       <p style="font-size:13px; margin-top:6px; color:#555;">
-        ✅ پیشنهاد: <strong>Gamma Scanner</strong> — <strong>سریع‌ترین اسکنر</strong>، بدون تبلیغ، <strong>Batch Scan</strong>، Zoom، Flash، Export CSV، قابلیت اسکن QR رمز وای‌فای و کوپن (طبق توصیف رسمی در گوگل‌پلی).
+        ✅ پیشنهاد: <strong>Gamma Scanner</strong> — سریع، بدون تبلیغ، <strong>Batch Scan</strong>، Zoom، Flash، Export CSV و قابلیت اسکن QR رمز وای‌فای (طبق وبسایت رسمی).
       </p>
-
       <h4 style="margin:20px 0 8px;">🗃️ مدیریت داده</h4>
       <input type="file" id="excelFile" accept=".xlsx,.xls" style="width:100%; margin:6px 0;" />
       <button onclick="loadExcel()" style="width:100%; margin:6px 0;">📥 import اکسل</button>
       <button onclick="exportExcel()" style="width:100%; margin:6px 0; background:#1976d2;">📤 خروجی اکسل</button>
       <button onclick="clearAll()" class="danger" style="width:100%; margin:6px 0;">🗑️ پاک کردن همه داده‌ها</button>
-
       <button onclick="saveSettings()" style="margin-top:20px; width:100%;">✅ ذخیره تنظیمات</button>
     </div>
   </div>
-
   <!-- جدول اصلی -->
   <div class="card" id="mainTableCard">
     <h3>لیست کل داده‌ها (<span id="totalCount">0</span> مورد)</h3>
     <input type="text" id="globalSearch" placeholder="🔍 جستجو در همه ستون‌ها..." oninput="applyFilters()" style="margin-bottom:12px;" />
-
     <div class="table-container">
       <table class="table">
         <thead>
@@ -275,19 +322,25 @@
       </table>
     </div>
   </div>
-
-  <!-- مدال‌ها (کوتاه‌شده برای فضا — کامل در نسخه واقعی) -->
+  <!-- مدال‌ها -->
   <div id="cameraModal" class="modal hidden">
     <div style="position:relative; width:100vw; height:100vh;">
       <video id="cameraVideo" playsinline></video>
-      <div class="scanner-frame" style="top:25%;left:10%;width:80%;height:50%;border:3px solid #2196f3;box-shadow:0 0 0 9999px rgba(0,0,0,0.6);pointer-events:none;"></div>
-      <div class="scan-hint" id="scanHint" style="position:absolute;top:8%;left:0;width:100%;text-align:center;color:white;font-size:16px;text-shadow:0 1px 4px #000;">🔍 بارکد را در چهارچوب قرار دهید.</div>
+      <div class="scanner-frame"></div>
+      <div class="scan-hint" id="scanHint">
+        🔍 بارکد را کاملاً در چهارچوب آبی قرار دهید.<br>
+        <span id="hintZoom">🔍 زوم: ×1.0</span>
+      </div>
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoomOut()">–</button>
+        <button class="zoom-btn" onclick="resetZoom()">↺</button>
+        <button class="zoom-btn" onclick="zoomIn()">+</button>
+      </div>
     </div>
     <div style="padding:16px; text-align:center;">
-      <button onclick="stopCamera()" class="danger" style="width:auto; padding:12px 24px; font-size:16px;">⏹️ توقف</button>
+      <button onclick="stopCamera()" class="danger" style="width:auto; padding:12px 24px; font-size:16px;">⏹️ توقف اسکن</button>
     </div>
   </div>
-
   <div id="addModal" class="modal hidden">
     <div class="modal-content">
       <h3>افزودن کالای جدید</h3>
@@ -298,17 +351,21 @@
       <label>موجودی سیستمی:</label>
       <input type="number" id="addStock" step="0.01" readonly />
       <label>شمارش ۱:</label>
-      <input type="number" id="addCount1" step="0.01" inputmode="numeric" oninput="updateDiscrepancyAdd()" />
+      <input type="number" id="addCount1" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyAdd()" />
       <div>مغایرت۱: <span id="addDisc1" class="discrepancy">—</span></div>
       <label>شمارش ۲:</label>
-      <input type="number" id="addCount2" step="0.01" inputmode="numeric" oninput="updateDiscrepancyAdd()" />
+      <input type="number" id="addCount2" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyAdd()" />
       <div>مغایرت۲: <span id="addDisc2" class="discrepancy">—</span></div>
-      <label>🏷️ تگ (شماره تگ کاغذی):</label>
-      <input type="text" id="addTag" onfocus="maybeShowLocationDropdown()" onblur="hideLocationDropdown()" />
+      <label>تگ:</label>
+      <input type="text" id="addTag" />
       <label>تیم:</label>
       <input type="text" id="addTeam" readonly />
-      <label>📍 محل:</label>
-      <input type="text" id="addLocation" readonly />
+      <label>محل:</label>
+      <div class="custom-select-container">
+        <input type="text" id="addLocation" autocomplete="off" />
+        <div class="custom-select-dropdown hidden" id="addLocationDropdown"></div>
+        <span class="select-arrow" onclick="toggleLocationDropdown('add')">▼</span>
+      </div>
       <label>توضیحات:</label>
       <textarea id="addNotes" rows="2"></textarea>
       <div style="display:flex; gap:8px; margin-top:16px;">
@@ -317,7 +374,6 @@
       </div>
     </div>
   </div>
-
   <div id="editModal" class="modal hidden">
     <div class="modal-content">
       <h3>ویرایش کالا</h3>
@@ -328,17 +384,21 @@
       <label>موجودی سیستمی:</label>
       <input type="number" id="editStock" step="0.01" readonly />
       <label>شمارش ۱:</label>
-      <input type="number" id="editCount1" step="0.01" inputmode="numeric" oninput="updateDiscrepancyEdit()" />
+      <input type="number" id="editCount1" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyEdit()" />
       <div>مغایرت۱: <span id="editDisc1" class="discrepancy">—</span></div>
       <label>شمارش ۲:</label>
-      <input type="number" id="editCount2" step="0.01" inputmode="numeric" oninput="updateDiscrepancyEdit()" />
+      <input type="number" id="editCount2" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyEdit()" />
       <div>مغایرت۲: <span id="editDisc2" class="discrepancy">—</span></div>
-      <label>🏷️ تگ (شماره تگ کاغذی):</label>
+      <label>تگ:</label>
       <input type="text" id="editTag" />
       <label>تیم:</label>
       <input type="text" id="editTeam" readonly />
-      <label>📍 محل:</label>
-      <input type="text" id="editLocation" readonly />
+      <label>محل:</label>
+      <div class="custom-select-container">
+        <input type="text" id="editLocation" autocomplete="off" />
+        <div class="custom-select-dropdown hidden" id="editLocationDropdown"></div>
+        <span class="select-arrow" onclick="toggleLocationDropdown('edit')">▼</span>
+      </div>
       <label>توضیحات:</label>
       <textarea id="editNotes" rows="2"></textarea>
       <div style="display:flex; gap:8px; margin-top:16px;">
@@ -347,11 +407,12 @@
       </div>
     </div>
   </div>
-
   <div id="calcModal" class="modal hidden">
     <div class="modal-content">
       <h3>ماشین‌حساب</h3>
-      <input type="text" id="calcDisplay" class="calc-display" inputmode="numeric" />
+      <!-- ✅ فقط کیبورد عددی -->
+      <input type="text" id="calcDisplay" class="calc-display" inputmode="numeric" pattern="[0-9+\-*/().]*" 
+             placeholder="12+5*2" />
       <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:6px; margin-top:10px;">
         <button class="calc-btn" onclick="calcAppend('7')">7</button>
         <button class="calc-btn" onclick="calcAppend('8')">8</button>
@@ -370,31 +431,31 @@
         <button class="calc-btn" onclick="calcBackspace()">⌫</button>
         <button class="calc-btn" onclick="calcAppend('+')">+</button>
       </div>
-      <button class="calc-btn calc-apply" onclick="calcApply()">✅ اعمال</button>
+      <button class="calc-btn calc-apply" onclick="calcApply()">✅ اعمال نتیجه</button>
       <button class="secondary" style="width:100%; margin-top:10px; padding:14px; font-size:18px;" 
               onclick="closeCalcModal()">❌ لغو</button>
     </div>
   </div>
-
   <script>
     // === تنظیمات ===
     let settings = JSON.parse(localStorage.getItem('appSettings')) || {
       userName: 'کاربر',
       teamName: '',
-      location: '',
+      defaultLocation: '',
       minLength: 14,
       maxLength: 20,
       searchByTag: false
     };
-
     let items = JSON.parse(localStorage.getItem('items')) || [];
+    let filters = {};
     let currentEditIndex = -1;
     let currentDropdown = null;
     let LAST_SCAN_METHOD = localStorage.getItem('scanner') || 'camera';
-
     let barcodeDetector = null;
     let videoStream = null;
     let scanInterval = null;
+    let lastScannedValue = '';
+    let zoomLevel = 1.0;
 
     // === راه‌اندازی ===
     document.addEventListener('DOMContentLoaded', () => {
@@ -408,35 +469,68 @@
           if (btn.dataset.tab === 'reports') renderDiscrepancyReports();
         });
       });
-
-      // UI تنظیمات
+      
+      // تنظیمات UI — بروزرسانی مقدار محل پیش‌فرض
       document.getElementById('settingUserName').value = settings.userName;
       document.getElementById('settingTeamName').value = settings.teamName;
-      document.getElementById('settingLocation').value = settings.location;
+      document.getElementById('settingDefaultLocation').value = settings.defaultLocation;
       document.getElementById('settingMinLength').value = settings.minLength;
       document.getElementById('settingMaxLength').value = settings.maxLength;
       document.getElementById('searchByTag').checked = settings.searchByTag;
 
-      // به‌روزرسانی UI جستجو
+      // ✅ رویداد تغییر حالت جستجو
+      document.getElementById('searchByTag').addEventListener('change', function() {
+        settings.searchByTag = this.checked;
+        updateSearchUI();
+      });
+
+      // پیش‌نمايش محل پیش‌فرض در تب عملیات
+      if (settings.defaultLocation) {
+        document.getElementById('globalLocation').value = settings.defaultLocation;
+      }
+
       updateSearchUI();
-      updateCurrentLocation();
       renderTable();
       renderFilterRow();
       renderDiscrepancyReports();
+
+      // ماشین‌حساب روی فیلدها
+      ['addCount1','addCount2','editCount1','editCount2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          const wrap = document.createElement('div');
+          wrap.style.position = 'relative';
+          el.parentNode.insertBefore(wrap, el);
+          wrap.appendChild(el);
+          const btn = document.createElement('button');
+          btn.innerHTML = '🧮';
+          btn.style.cssText = 
+            'position:absolute;left:12px;top:50%;transform:translateY(-50%);' +
+            'background:#e0e0e0;border:none;width:40px;height:40px;' +
+            'border-radius:10px;cursor:pointer;font-size:20px;font-weight:bold;';
+          btn.onclick = () => openCalc(id);
+          wrap.appendChild(btn);
+          el.style.paddingLeft = '60px';
+        }
+      });
+
+      // پردازش اسکن خارجی
+      const params = new URLSearchParams(window.location.search);
+      const bc = params.get('SCAN_RESULT')?.trim() || params.get('barcode')?.trim();
+      if (bc && !settings.searchByTag) {
+        document.getElementById('searchInput').value = bc;
+        setTimeout(searchOrAdd, 150);
+      }
     });
 
-    // ✅ فقط نمایش محل در عملیات
-    function updateCurrentLocation() {
-      document.getElementById('currentLocation').value = settings.location || '—';
-    }
-
+    // ✅ به‌روزرسانی UI جستجو بر اساس تنظیمات
     function updateSearchUI() {
       const searchByTag = settings.searchByTag;
       const input = document.getElementById('searchInput');
       const scanContainer = document.getElementById('scanButtonContainer');
-
       if (searchByTag) {
-        input.placeholder = "تگ را وارد کنید (مثال: T-105)";
+        input.placeholder = "تگ را وارد کنید (مثلاً: T-001)";
+        input.value = '';
         scanContainer.classList.add('hidden');
       } else {
         input.placeholder = "بارکد را وارد کنید";
@@ -444,181 +538,124 @@
       }
     }
 
-    // --- تنظیمات ---
-    function saveSettings() {
-      const user = document.getElementById('settingUserName').value.trim() || 'کاربر';
-      const team = document.getElementById('settingTeamName').value.trim();
-      const loc = document.getElementById('settingLocation').value.trim();
-      const min = parseInt(document.getElementById('settingMinLength').value) || 14;
-      const max = parseInt(document.getElementById('settingMaxLength').value) || 20;
-      const searchByTag = document.getElementById('searchByTag').checked;
-
-      if (min > max) return alert('⚠️ حداقل نباید بیشتر از حداکثر باشد.');
-      settings = { userName: user, teamName: team, location: loc, minLength: min, maxLength: max, searchByTag };
-      localStorage.setItem('appSettings', JSON.stringify(settings));
-      updateSearchUI();
-      updateCurrentLocation();
-      alert('✅ تنظیمات ذخیره شد.');
-    }
-
-    // --- محل‌ها (فقط از داده‌ها و تنظیمات) ---
-    function getLocations() {
-      const set = new Set([settings.location]);
-      items.forEach(r => { const loc = (r[8] || '').trim(); if (loc) set.add(loc); });
-      return Array.from(set).filter(x => x).sort();
-    }
-
-    function renderDropdown(dropdownId, locations) {
-      const el = document.getElementById(dropdownId);
-      if (!el) return;
-      el.innerHTML = locations.length 
-        ? locations.map(l => `<div class="custom-select-option" onclick="selectLocation('${l.replace(/'/g,"\\'")}','${dropdownId}')">${l}</div>`).join('')
-        : '<div class="custom-select-option" style="color:#999;">محلی وجود ندارد</div>';
-    }
-
-    function toggleLocationDropdown(context) {
-      hideAllDropdowns();
-      const id = context === 'settings' ? 'settingLocationDropdown' : 'searchLocationDropdown';
-      const el = document.getElementById(id);
-      if (el.classList.contains('hidden')) {
-        renderDropdown(id, getLocations());
-        el.classList.remove('hidden');
-        currentDropdown = id;
-      }
-    }
-
-    function maybeShowLocationDropdown() {
-      // فقط اگر فیلد search یا addTag focus شد
-      if (document.activeElement.id === 'searchInput' || document.activeElement.id === 'addTag') {
-        const el = document.getElementById('searchLocationDropdown');
-        renderDropdown('searchLocationDropdown', getLocations());
-        el.classList.remove('hidden');
-        currentDropdown = 'searchLocationDropdown';
-      }
-    }
-
-    function hideLocationDropdown() {
-      setTimeout(() => {
-        if (document.activeElement.id !== 'searchInput' && document.activeElement.id !== 'addTag') {
-          const el = document.getElementById('searchLocationDropdown');
-          el.classList.add('hidden');
-          currentDropdown = null;
-        }
-      }, 150);
-    }
-
-    function hideAllDropdowns() {
-      ['settingLocationDropdown','searchLocationDropdown'].forEach(id=>{
-        const e=document.getElementById(id); if(e) e.classList.add('hidden');
-      });
-      currentDropdown = null;
-    }
-
-    function selectLocation(loc, dropdownId) {
-      if (dropdownId === 'settingLocationDropdown') {
-        document.getElementById('settingLocation').value = loc;
-      } else if (dropdownId === 'searchLocationDropdown') {
-        // در حالت جستجوی تگ، محل را در searchInput نمی‌ذاریم — فقط برای افزودن
-        // ولی برای سازگاری، می‌توانیم در مدال افزودن پر کنیم
-      }
-      hideAllDropdowns();
-    }
-
-    // --- تب گزارشات — با فیلتر ستونی ---
-    function applyReportFilters() {
-      renderDiscrepancyReports();
-    }
-
+    // === تب گزارشات — با هایلایت تکراری (تگ+محل و بارکد+محل) ===
     function renderDiscrepancyReports() {
-      const global = document.getElementById('reportGlobalSearch').value.toLowerCase();
-      const colIndex = document.getElementById('reportSearchColumn').value;
-
+      const disc1List = document.getElementById('discrepancy1List');
+      const disc2List = document.getElementById('discrepancy2List');
+      
       const disc1Items = items.filter(r => Math.abs(parseFloat(r[3])) > 0.001);
       const disc2Items = items.filter(r => Math.abs(parseFloat(r[5])) > 0.001);
 
-      const filterItems = (list) => {
-        return list.filter(row => {
-          if (!global) return true;
-          if (colIndex === 'all') {
-            return row.some(cell => String(cell).toLowerCase().includes(global));
-          } else {
-            const idx = parseInt(colIndex);
-            return String(row[idx] || '').toLowerCase().includes(global);
-          }
-        });
-      };
-
-      const d1 = filterItems(disc1Items);
-      const d2 = filterItems(disc2Items);
-
-      renderReportTable('disc1Table', d1, [0,1,6,8,9,2,3]);
-      renderReportTable('disc2Table', d2, [0,1,6,8,9,4,5]);
-    }
-
-    function renderReportTable(tableId, data, cols) {
-      const t = document.getElementById(tableId).querySelector('tbody');
-      if (data.length === 0) {
-        t.innerHTML = `<tr><td colspan="${cols.length}" style="text-align:center;">داده‌ای یافت نشد.</td></tr>`;
-        return;
-      }
-
-      // تشخیص duplicate تگ+محل
-      const dupTagLoc = {};
-      data.forEach(r => {
-        const key = `${r[6]}|${r[8]}`;
-        dupTagLoc[key] = (dupTagLoc[key] || 0) + 1;
+      // تشخیص تکرار (برای هایلایت)
+      const bcLocCount = {};
+      const tagLocCount = {};
+      items.forEach(r => {
+        const bcLoc = `${r[0]}|${r[8]}`;
+        const tagLoc = `${r[6]}|${r[8]}`;
+        bcLocCount[bcLoc] = (bcLocCount[bcLoc] || 0) + 1;
+        tagLocCount[tagLoc] = (tagLocCount[tagLoc] || 0) + 1;
       });
 
-      t.innerHTML = data.map(r => {
-        const key = `${r[6]}|${r[8]}`;
-        const dupClass = dupTagLoc[key] > 1 ? ' class="tag-location-dup"' : '';
-        return `<tr>
-          <td${dupClass}>${r[cols[0]]}</td>
-          <td>${r[cols[1]]}</td>
-          <td${dupClass}>${r[cols[2]]}</td>
-          <td${dupClass}>${r[cols[3]]}</td>
-          <td>${r[cols[4]]}</td>
-          <td>${r[cols[5]]}</td>
-          <td class="discrepancy">${r[cols[6]]}</td>
-        </tr>`;
-      }).join('');
+      function buildDiscrepancyTable(data) {
+        if (data.length === 0) return '<p style="text-align:center; color:#666;">موردی یافت نشد.</p>';
+        return `
+          <table class="table" style="font-size:12px;">
+            <thead><tr><th>بارکد</th><th>نام</th><th>موجودی</th><th>شمارش</th><th>مغایرت</th><th>تگ</th><th>محل</th></tr></thead>
+            <tbody>
+              ${data.map(r => {
+                const bcLoc = `${r[0]}|${r[8]}`;
+                const tagLoc = `${r[6]}|${r[8]}`;
+                const isDup = bcLocCount[bcLoc] > 1 || tagLocCount[tagLoc] > 1;
+                const dupClass = isDup ? ' class="duplicate"' : '';
+                return `<tr${dupClass}>
+                  <td${dupClass}>${r[0]}</td>
+                  <td${dupClass}>${r[1]}</td>
+                  <td>${r[9]}</td>
+                  <td>${r[2] || r[4]}</td>
+                  <td class="discrepancy">${r[3] || r[5]}</td>
+                  <td${dupClass}>${r[6]}</td>
+                  <td${dupClass}>${r[8]}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+
+      disc1List.innerHTML = buildDiscrepancyTable(disc1Items);
+      disc2List.innerHTML = buildDiscrepancyTable(disc2Items);
     }
 
     function exportDiscrepancies() {
       const disc1 = items.filter(r => Math.abs(parseFloat(r[3])) > 0.001);
       const disc2 = items.filter(r => Math.abs(parseFloat(r[5])) > 0.001);
-
       const wsData = [
         ['--- مغایرت‌های شمارش ۱ ---'],
-        ['بارکد','نام کالا','تگ','محل','موجودی','شمارش۱','مغایرت۱'],
-        ...disc1.map(r => [r[0], r[1], r[6], r[8], r[9], r[2], r[3]]),
+        ['بارکد','نام کالا','موجودی','شمارش۱','مغایرت۱','تگ','محل'],
+        ...disc1.map(r => [r[0], r[1], r[9], r[2], r[3], r[6], r[8]]),
         [],
         ['--- مغایرت‌های شمارش ۲ ---'],
-        ['بارکد','نام کالا','تگ','محل','موجودی','شمارش۲','مغایرت۲'],
-        ...disc2.map(r => [r[0], r[1], r[6], r[8], r[9], r[4], r[5]])
+        ['بارکد','نام کالا','موجودی','شمارش۲','مغایرت۲','تگ','محل'],
+        ...disc2.map(r => [r[0], r[1], r[9], r[4], r[5], r[6], r[8]])
       ];
-
       const ws = XLSX.utils.aoa_to_sheet(wsData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'مغایرت‌ها');
       XLSX.writeFile(wb, 'مغایرت‌های_انبارگردانی.xlsx');
     }
 
-    // --- مرتب‌سازی بر اساس تاریخ ---
+    // --- تنظیمات ---
+    function saveSettings() {
+      const user = document.getElementById('settingUserName').value.trim() || 'کاربر';
+      const team = document.getElementById('settingTeamName').value.trim();
+      const loc = document.getElementById('settingDefaultLocation').value.trim();
+      const min = parseInt(document.getElementById('settingMinLength').value) || 14;
+      const max = parseInt(document.getElementById('settingMaxLength').value) || 20;
+      const searchByTag = document.getElementById('searchByTag').checked;
+
+      if (min > max) return alert('⚠️ حداقل نباید بیشتر از حداکثر باشد.');
+      settings = { userName: user, teamName: team, defaultLocation: loc, minLength: min, maxLength: max, searchByTag };
+      localStorage.setItem('appSettings', JSON.stringify(settings));
+
+      // به‌روزرسانی محل پیش‌فرض در تب عملیات
+      document.getElementById('globalLocation').value = loc;
+
+      updateSearchUI();
+      alert('✅ تنظیمات ذخیره شد.');
+    }
+
+    // --- مرتب‌سازی بر اساس تاریخ دقیق ---
     function renderTable() {
       document.getElementById('totalCount').textContent = items.length;
+      // مرتب‌سازی بر اساس ستون 11 (آخرین بروزرسانی)
       items.sort((a, b) => parseFaDateTime(b[11]) - parseFaDateTime(a[11]));
       applyFilters();
     }
 
     function parseFaDateTime(faStr) {
       if (!faStr) return 0;
-      const time = faStr.split(' ').pop();
+      const parts = faStr.split(' ');
+      if (parts.length < 2) return Date.now();
+      const time = parts[1];
       const [h, m, s] = time.split(':').map(x => parseInt(x) || 0);
       const d = new Date();
       d.setHours(h, m, s, 0);
       return d.getTime();
     }
+
+    // --- زوم ---
+    async function applyZoom(level) {
+      zoomLevel = Math.max(1.0, Math.min(3.0, level));
+      document.getElementById('hintZoom').textContent = `🔍 زوم: ×${zoomLevel.toFixed(1)}`;
+      if (!videoStream) return;
+      const track = videoStream.getVideoTracks()[0];
+      if (track && track.applyConstraints) {
+        try { await track.applyConstraints({ advanced: [{ zoom: zoomLevel }] }); } catch (e) {}
+      }
+    }
+    function zoomIn() { applyZoom(zoomLevel + 0.3); }
+    function zoomOut() { applyZoom(zoomLevel - 0.3); }
+    function resetZoom() { applyZoom(1.0); }
 
     // --- اسکنرهای خارجی ---
     const SCANNERS = [
@@ -632,7 +669,7 @@
     ];
 
     function changeScanner() {
-      let msg = 'روش اسکن را انتخاب کنید:\n\n';
+      let msg = 'روش اسکن را انتخاب کنید:\n';
       SCANNERS.forEach((s, i) => msg += `${i+1}. ${s.name}\n`);
       msg += '\nشماره را وارد کنید (پیش‌فرض: 1):';
       const choice = prompt(msg, '1');
@@ -643,6 +680,14 @@
       alert(`✅ اسکنر: ${sel.name}`);
     }
 
+    function launchExternalScanner(id) {
+      const s = SCANNERS.find(x => x.id === id);
+      if (s && s.intent) {
+        const w = window.open(s.intent, '_self');
+        if (!w) alert(`❌ «${s.name}» نصب نیست. از اسکن داخلی استفاده کنید.`);
+      }
+    }
+
     function startScan() {
       if (settings.searchByTag) {
         alert('⚠️ در حالت جستجو بر اساس تگ، اسکن بارکد غیرفعال است.');
@@ -651,20 +696,16 @@
       if (LAST_SCAN_METHOD === 'camera') {
         startCameraScan();
       } else {
-        const s = SCANNERS.find(x => x.id === LAST_SCAN_METHOD);
-        if (s && s.intent) {
-          const w = window.open(s.intent, '_self');
-          if (!w) alert(`❌ «${s.name}» نصب نیست.`);
-        }
+        launchExternalScanner(LAST_SCAN_METHOD);
       }
     }
 
+    // --- اسکن داخلی ---
     async function startCameraScan() {
       if (!("BarcodeDetector" in window)) {
-        alert("❌ مرورگر از اسکن پشتیبانی نمی‌کند.");
+        alert("❌ مرورگر از اسکن پشتیبانی نمی‌کند. از Chrome استفاده کنید.");
         return;
       }
-
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
@@ -672,72 +713,137 @@
         videoStream = stream;
         const video = document.getElementById('cameraVideo');
         video.srcObject = stream;
-        barcodeDetector = new BarcodeDetector({ formats: ['qr_code','ean_13','code_128'] });
+        barcodeDetector = new BarcodeDetector({ formats: ['qr_code','ean_13','code_128','code_39'] });
         document.getElementById('cameraModal').classList.remove('hidden');
         video.play();
-
-        const interval = setInterval(async () => {
+        applyZoom(1.0);
+        scanInterval = setInterval(async () => {
           if (!barcodeDetector || !video.srcObject || video.paused) return;
           try {
             const barcodes = await barcodeDetector.detect(video);
             if (barcodes.length === 0) return;
-            const value = (barcodes[0].rawValue || '').trim();
+            const b = barcodes[0];
+            const value = (b.rawValue || '').trim();
             if (!value || value.length < settings.minLength || value.length > settings.maxLength) return;
-            clearInterval(interval);
+            const { x, width } = b.boundingBox || {};
+            const vw = video.videoWidth;
+            if (x && (x < vw * 0.1 || x + width > vw * 0.9)) return;
+            clearInterval(scanInterval);
+            scanInterval = null;
             stopCamera();
             document.getElementById('searchInput').value = value;
             setTimeout(searchOrAdd, 150);
           } catch (e) {}
         }, 350);
-      } catch (err) { alert("❌ دسترسی به دوربین رد شد."); }
+      } catch (err) {
+        alert("❌ دسترسی به دوربین رد شد.");
+      }
     }
 
     function stopCamera() {
       const modal = document.getElementById('cameraModal');
       modal.classList.add('hidden');
+      if (scanInterval) clearInterval(scanInterval);
       if (videoStream) videoStream.getTracks().forEach(t => t.stop());
       videoStream = null;
       barcodeDetector = null;
+      const v = document.getElementById('cameraVideo');
+      if (v.srcObject) v.srcObject.getTracks().forEach(t => t.stop());
+      v.srcObject = null;
     }
 
-    // --- import/export ---
-    function loadExcel() { /* ... */ }
-    function exportExcel() { /* ... */ }
-    function clearAll() { /* ... */ }
+    // --- import/export/clear ---
+    function loadExcel() {
+      const file = document.getElementById('excelFile').files[0];
+      if (!file) return alert('فایلی انتخاب نشده است.');
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const wb = XLSX.read(data, { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
+          if (json.length < 2) return alert('فایل خالی است.');
+          items = [];
+          for (let i = 1; i < json.length; i++) {
+            const row = json[i];
+            const bc = String(row[0] || '').trim();
+            if (!bc) continue;
+            const stock = parseFloat(row[9]) || 0;
+            const c1 = parseFloat(row[2]) || 0;
+            const c2 = parseFloat(row[4]) || 0;
+            const disc1 = (c1 - stock).toFixed(2);
+            const disc2 = (c2 - stock).toFixed(2);
+            items.push([
+              bc, row[1] || '', c1, disc1, c2, disc2,
+              row[6] || '', row[7] || settings.teamName || '', row[8] || settings.defaultLocation || '', stock,
+              row[10] || '', getNowFa(), settings.userName
+            ]);
+          }
+          localStorage.setItem('items', JSON.stringify(items));
+          renderTable();
+          renderDiscrepancyReports();
+          alert(`✅ ${items.length} مورد import شد.`);
+        } catch (err) {
+          alert('خطا در import: ' + (err.message || 'نامشخص'));
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
 
-    // --- منطق اصلی جستجو ---
+    function exportExcel() {
+      if (items.length === 0) return alert('داده‌ای برای خروجی وجود ندارد.');
+      const headers = ['بارکد','نام کالا','شمارش۱','مغایرت۱','شمارش۲','مغایرت۲','تگ','تیم','محل','موجودی','توضیحات','آخرین بروزرسانی','کاربر'];
+      const wsData = [headers, ...items.map(r => r.slice(0,13))];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'انبار');
+      XLSX.writeFile(wb, 'انبارگردانی_خروجی.xlsx');
+    }
+
+    function clearAll() {
+      if (confirm('⚠️ تمام داده‌ها برای همیشه پاک شوند؟')) {
+        items = [];
+        localStorage.setItem('items', JSON.stringify(items));
+        renderTable();
+        renderDiscrepancyReports();
+      }
+    }
+
+    // --- منطق اصلی جستجو (شرطی) ---
     function searchOrAdd() {
       const query = document.getElementById('searchInput').value.trim();
+      const loc = document.getElementById('globalLocation').value.trim() || settings.defaultLocation;
       if (!query) return alert('لطفاً مقدار را وارد کنید.');
-
+      
       if (settings.searchByTag) {
-        const matches = items.filter(r => r[6] === query && r[8] === settings.location);
-        if (matches.length > 0) {
-          const idx = items.findIndex(r => r[6] === query && r[8] === settings.location);
-          openEditModal(idx);
-        } else {
-          openAddModal('', query);
-        }
+        // جستجو بر اساس تگ + محل
+        const idx = items.findIndex(r => r[6] === query && r[8] === loc);
+        if (idx !== -1) openEditModal(idx);
+        else openAddModal('', loc, query);
       } else {
+        // جستجو بر اساس بارکد + محل
         if (query.length < settings.minLength || query.length > settings.maxLength) {
           alert(`❌ طول بارکد (${query.length}) خارج از محدوده (${settings.minLength}–${settings.maxLength}) است.`);
           return;
         }
-        const idx = items.findIndex(r => r[0] === query && r[8] === settings.location);
+        const idx = items.findIndex(r => r[0] === query && r[8] === loc);
         if (idx !== -1) openEditModal(idx);
-        else openAddModal(query);
+        else openAddModal(query, loc);
       }
     }
 
-    // --- افزودن/ویرایش — با بروزرسانی همیشگی تیم/کاربر از تنظیمات ---
-    function openAddModal(bc, tag = '') {
+    // --- افزودن/ویرایش — فقط از تنظیمات برای تیم و کاربر ---
+    function openAddModal(bc, loc, tag = '') {
+      const existing = items.find(r => r[0] === bc);
+      const stock = existing ? parseFloat(existing[9]) || 0 : 0;
       document.getElementById('addBarcode').value = bc;
+      document.getElementById('addLocation').value = loc;
+      document.getElementById('addStock').value = stock;
+      document.getElementById('addCount1').value = stock;
+      document.getElementById('addCount2').value = '';
       document.getElementById('addTag').value = tag;
       document.getElementById('addTeam').value = settings.teamName;
-      document.getElementById('addLocation').value = settings.location;
-      document.getElementById('addStock').value = 0;
-      document.getElementById('addCount1').value = 0;
-      document.getElementById('addCount2').value = '';
       document.getElementById('addNotes').value = '';
       updateDiscrepancyAdd();
       document.getElementById('addModal').classList.remove('hidden');
@@ -751,19 +857,18 @@
       const c2Raw = document.getElementById('addCount2').value;
       const c2 = c2Raw !== '' ? parseFloat(c2Raw) || 0 : 0;
       const disc1 = (c1 - stock).toFixed(2);
-      const disc2 = (c2 - stock).toFixed(2);
-
-      items.push([
+      const disc2 = calculateDiscrepancy2(stock, c2Raw, disc1);
+      const newRow = [
         bc, name, c1, disc1, c2, disc2,
         document.getElementById('addTag').value.trim(),
-        settings.teamName, // ✅ همیشه از تنظیمات
-        settings.location, // ✅ همیشه از تنظیمات
+        settings.teamName, // ✅ فقط از تنظیمات
+        document.getElementById('addLocation').value.trim(),
         stock,
         document.getElementById('addNotes').value.trim(),
         getNowFa(),
-        settings.userName // ✅ همیشه از تنظیمات
-      ]);
-
+        settings.userName // ✅ فقط از تنظیمات
+      ];
+      items.push(newRow);
       localStorage.setItem('items', JSON.stringify(items));
       renderTable();
       renderDiscrepancyReports();
@@ -775,14 +880,14 @@
       currentEditIndex = idx;
       const r = items[idx];
       document.getElementById('editBarcode').value = r[0];
-      document.getElementById('editName').value = r[1];
-      document.getElementById('editStock').value = r[9];
-      document.getElementById('editCount1').value = r[2];
-      document.getElementById('editCount2').value = r[4] || '';
-      document.getElementById('editTag').value = r[6];
-      document.getElementById('editTeam').value = r[7]; // فقط نمایش — در saveEdit از تنظیمات استفاده می‌شود
-      document.getElementById('editLocation').value = r[8];
-      document.getElementById('editNotes').value = r[10];
+      document.getElementById('editName').value = r[1] || '';
+      document.getElementById('editStock').value = r[9] || 0;
+      document.getElementById('editCount1').value = r[2] || '';
+      document.getElementById('editCount2').value = r[4] != null ? r[4] : '';
+      document.getElementById('editTag').value = r[6] || '';
+      document.getElementById('editTeam').value = settings.teamName; // ✅ فقط نمایش از تنظیمات (readonly)
+      document.getElementById('editLocation').value = r[8] || '';
+      document.getElementById('editNotes').value = r[10] || '';
       updateDiscrepancyEdit();
       document.getElementById('editModal').classList.remove('hidden');
     }
@@ -794,21 +899,18 @@
       const c1 = parseFloat(document.getElementById('editCount1').value) || 0;
       const c2Raw = document.getElementById('editCount2').value;
       const c2 = c2Raw !== '' ? parseFloat(c2Raw) || 0 : 0;
-
       r[1] = document.getElementById('editName').value.trim();
       r[2] = c1;
       r[4] = c2;
       r[6] = document.getElementById('editTag').value.trim();
       r[7] = settings.teamName; // ✅ همیشه از تنظیمات
-      r[8] = settings.location; // ✅ همیشه از تنظیمات
+      r[8] = document.getElementById('editLocation').value.trim();
       r[10] = document.getElementById('editNotes').value.trim();
       r[9] = stock;
-      r[11] = getNowFa();       // ✅ همیشه جدید
+      r[11] = getNowFa();
       r[12] = settings.userName; // ✅ همیشه از تنظیمات
-
       r[3] = (c1 - stock).toFixed(2);
-      r[5] = (c2 - stock).toFixed(2);
-
+      r[5] = calculateDiscrepancy2(stock, c2Raw, r[3]);
       items[currentEditIndex] = r;
       localStorage.setItem('items', JSON.stringify(items));
       renderTable();
@@ -817,7 +919,7 @@
       document.getElementById('searchInput').value = '';
     }
 
-    // --- بقیه توابع (applyFilters, getNowFa, ماشین‌حساب, duplicate detection) ---
+    // --- توابع کلیدی — شامل هایلایت تگ+محل ---
     function getNowFa() {
       return new Intl.DateTimeFormat('fa-IR', {
         year: 'numeric', month: '2-digit', day: '2-digit',
@@ -840,21 +942,24 @@
         return;
       }
 
-      // duplicate: بارکد+محل و تگ+محل
-      const dupBC = {}, dupTagLoc = {};
+      // ✅ شمارش تکرار بارکد+محل و تگ+محل
+      const bcLocCount = {};
+      const tagLocCount = {};
       data.forEach(r => {
-        const k1 = r[0] + '|' + r[8];
-        const k2 = r[6] + '|' + r[8];
-        dupBC[k1] = (dupBC[k1] || 0) + 1;
-        dupTagLoc[k2] = (dupTagLoc[k2] || 0) + 1;
+        const bcLoc = `${r[0]}|${r[8]}`; // بارکد+محل
+        const tagLoc = `${r[6]}|${r[8]}`; // تگ+محل
+        bcLocCount[bcLoc] = (bcLocCount[bcLoc] || 0) + 1;
+        tagLocCount[tagLoc] = (tagLocCount[tagLoc] || 0) + 1;
       });
 
       t.innerHTML = data.map((r, i) => {
-        const k1 = r[0] + '|' + r[8];
-        const k2 = r[6] + '|' + r[8];
-        const dupClass = dupBC[k1] > 1 ? ' class="duplicate"' : '';
-        const tagLocClass = dupTagLoc[k2] > 1 ? ' class="tag-location-dup"' : '';
-        const idx = items.findIndex(x => x[0]===r[0] && x[8]===r[8]);
+        const bcLoc = `${r[0]}|${r[8]}`;
+        const tagLoc = `${r[6]}|${r[8]}`;
+        // ✅ هایلایت اگر یکی از دو جفت تکراری باشد
+        const isDup = bcLocCount[bcLoc] > 1 || tagLocCount[tagLoc] > 1;
+        const dupClass = isDup ? ' class="duplicate"' : '';
+        const idx = items.findIndex(x => x[0]===r[0] && x[8]===r[8] && x[6]===r[6]);
+
         return `<tr>
           <td${dupClass}>${r[0]}</td>
           <td${dupClass}>${r[1]}</td>
@@ -862,9 +967,9 @@
           <td class="discrepancy">${r[3]}</td>
           <td>${r[4]}</td>
           <td class="discrepancy">${r[5]}</td>
-          <td${tagLocClass}>${r[6]}</td>
+          <td${dupClass}>${r[6]}</td>
           <td>${r[7]}</td>
-          <td${dupClass}${tagLocClass}>${r[8]}</td>
+          <td${dupClass}>${r[8]}</td>
           <td>${parseFloat(r[9]).toLocaleString('fa-IR')}</td>
           <td>${r[10]}</td>
           <td>${r[11]}</td>
@@ -877,12 +982,58 @@
       }).join('');
     }
 
-    function renderFilterRow() { /* ... */ }
-    function removeItem(i) { /* ... */ }
+    function renderFilterRow() {
+      const headers = Array(13).fill('').map((_,i) => 
+        `<th><input type="text" class="filter-input" data-col="${i}" placeholder="فیلتر..." oninput="applyFilters()"></th>`
+      );
+      document.getElementById('filterRow').innerHTML = headers.join('') + '<th></th>';
+    }
+
+    function removeItem(i) {
+      if (confirm('این ردیف حذف شود؟')) {
+        items.splice(i, 1);
+        localStorage.setItem('items', JSON.stringify(items));
+        renderTable();
+        renderDiscrepancyReports();
+      }
+    }
+
+    function calculateDiscrepancy2(stock, count2Str, discrepancy1) {
+      if (parseFloat(discrepancy1) === 0) {
+        const c2 = count2Str !== '' ? parseFloat(count2Str) : null;
+        if (c2 === null || c2 === 0) return "0.00";
+      }
+      const c2 = count2Str !== '' ? parseFloat(count2Str) || 0 : 0;
+      return (c2 - stock).toFixed(2);
+    }
+
+    function updateDiscrepancyAdd() {
+      const stock = parseFloat(document.getElementById('addStock').value) || 0;
+      const c1 = parseFloat(document.getElementById('addCount1').value) || 0;
+      const c2 = document.getElementById('addCount2').value;
+      const disc1 = (c1 - stock).toFixed(2);
+      document.getElementById('addDisc1').textContent = disc1;
+      const disc2 = calculateDiscrepancy2(stock, c2, disc1);
+      document.getElementById('addDisc2').textContent = disc2;
+    }
+
+    function updateDiscrepancyEdit() {
+      const stock = parseFloat(document.getElementById('editStock').value) || 0;
+      const c1 = parseFloat(document.getElementById('editCount1').value) || 0;
+      const c2 = document.getElementById('editCount2').value;
+      const disc1 = (c1 - stock).toFixed(2);
+      document.getElementById('editDisc1').textContent = disc1;
+      const disc2 = calculateDiscrepancy2(stock, c2, disc1);
+      document.getElementById('editDisc2').textContent = disc2;
+    }
 
     // --- ماشین‌حساب ---
     let CURRENT_CALC_TARGET = null;
-    function openCalc(id) { CURRENT_CALC_TARGET = id; document.getElementById('calcDisplay').value = ''; document.getElementById('calcModal').classList.remove('hidden'); }
+    function openCalc(id) { 
+      CURRENT_CALC_TARGET = id; 
+      document.getElementById('calcDisplay').value = ''; 
+      document.getElementById('calcModal').classList.remove('hidden'); 
+    }
     function calcAppend(c) { document.getElementById('calcDisplay').value += c; }
     function calcBackspace() { const e = document.getElementById('calcDisplay'); e.value = e.value.slice(0, -1); }
     function calcApply() {
@@ -904,15 +1055,71 @@
       CURRENT_CALC_TARGET = null; 
     }
 
-    function updateDiscrepancyAdd() { /* ... */ }
-    function updateDiscrepancyEdit() { /* ... */ }
+    // --- مدیریت محل‌ها (کشویی) ---
+    function getLocations() {
+      const set = new Set();
+      items.forEach(r => { const loc = (r[8] || '').trim(); if (loc) set.add(loc); });
+      // اضافه کردن محل پیش‌فرض اگر وارد شده باشد
+      if (settings.defaultLocation) set.add(settings.defaultLocation);
+      return Array.from(set).sort();
+    }
+
+    function renderDropdown(id, locations) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = locations.length 
+        ? locations.map(l => `<div class="custom-select-option" onclick="selectLocation('${l.replace(/'/g,"\\'")}','${id}')">${l}</div>`).join('')
+        : '<div class="custom-select-option" style="color:#999;">محلی وجود ندارد</div>';
+    }
+
+    function toggleLocationDropdown(context) {
+      hideAllDropdowns();
+      const map = {
+        main: { dropdown: 'locationDropdown', input: 'globalLocation' },
+        add:  { dropdown: 'addLocationDropdown', input: 'addLocation' },
+        edit: { dropdown: 'editLocationDropdown', input: 'editLocation' },
+        settings: { dropdown: 'settingsLocationDropdown', input: 'settingDefaultLocation' }
+      };
+      const conf = map[context];
+      if (!conf) return;
+      const { dropdown, input } = conf;
+      const el = document.getElementById(dropdown);
+      if (el && el.classList.contains('hidden')) {
+        renderDropdown(dropdown, getLocations());
+        el.classList.remove('hidden');
+        currentDropdown = context;
+        // فوکوس روی فیلد مربوطه برای بهبود UX
+        document.getElementById(input)?.focus();
+      }
+    }
+
+    function hideAllDropdowns() {
+      ['locationDropdown','addLocationDropdown','editLocationDropdown','settingsLocationDropdown'].forEach(id=>{
+        const e=document.getElementById(id); if(e) e.classList.add('hidden');
+      });
+      currentDropdown = null;
+    }
+
+    function selectLocation(loc, dropdownId) {
+      const map = {
+        'locationDropdown': 'globalLocation',
+        'addLocationDropdown': 'addLocation',
+        'editLocationDropdown': 'editLocation',
+        'settingsLocationDropdown': 'settingDefaultLocation'
+      };
+      const inputId = map[dropdownId] || dropdownId.replace('Dropdown', '');
+      document.getElementById(inputId).value = loc;
+      hideAllDropdowns();
+    }
 
     function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
-    function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); currentEditIndex = -1; }
+    function closeEditModal() { 
+      document.getElementById('editModal').classList.add('hidden');
+      currentEditIndex = -1; 
+    }
 
-    console.log('✅ نسخه نهایی v3 — با محل در تنظیمات، گزارش فیلترشده، تگ=شماره تگ کاغذی، و بروزرسانی هوشمند تیم/کاربر.');
+    console.log('✅ نسخه نهایی — با هایلایت تکراری (تگ+محل) و (بارکد+محل) در همه جداول.');
   </script>
-
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
 </html>
