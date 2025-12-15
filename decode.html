@@ -129,11 +129,11 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 200px;
-      height: 200px;
-      margin: -100px 0 0 -100px;
-      border: 2px solid #2196f3;
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+      width: 220px;
+      height: 120px;
+      margin: -60px 0 0 -110px;
+      border: 2px solid #4CAF50;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.6);
       pointer-events: none;
     }
 
@@ -235,12 +235,15 @@
   <div id="cameraModal" class="modal hidden">
     <div class="modal-content" style="padding:0; max-width:100%; width:100%; max-height:100%;">
       <div style="position:relative; background:#000;">
-        <video id="cameraVideo" playsinline autoplay></video>
+        <video id="cameraVideo" playsinline autoplay muted></video>
         <div class="scanner-frame"></div>
       </div>
       <div style="padding:16px; text-align:center;">
-        <button onclick="stopCamera()" class="danger" style="width:auto; padding:10px 20px;">⏹️ توقف اسکن</button>
-        <p style="margin-top:10px; font-size:14px; color:#666;">جهت اسکن، بارکد را در داخل چهارچوب قرار دهید.</p>
+        <p style="margin:8px 0; color:#666; font-size:14px;">
+          📌 <b>Code 128</b> و <b>Free 3 of 9 (Extended Code 39)</b> پشتیبانی می‌شوند.<br/>
+          اگر بعد از ۵ ثانیه اسکن نشد، به‌صورت خودکار به Gamma Scanner منتقل می‌شوید.
+        </p>
+        <button onclick="stopCamera()" class="danger" style="width:auto; padding:10px 20px;">⏹️ توقف دستی</button>
       </div>
     </div>
   </div>
@@ -338,15 +341,18 @@
   <!-- مدال خطا -->
   <div id="installModal" class="modal hidden">
     <div class="modal-content" style="max-width:350px; text-align:center;">
-      <h3 style="color:#d32f2f;">❗ اسکنر باز نشد</h3>
-      <p style="margin:12px 0;">برنامهٔ «<span id="appNameHere">Gamma Barcode Scanner</span>» روی دستگاه شما نصب نیست یا پاسخ نمی‌دهد.</p>
+      <h3 style="color:#d32f2f;">❗ Gamma Scanner نصب نیست</h3>
+      <p style="margin:12px 0;">برای اسکن قوی‌تر (به‌ویژه <b>Free 3 of 9</b> و <b>Code 128</b>)، Gamma پیشنهاد می‌شود.</p>
       <p style="font-size:14px; margin:10px 0;">
-        ✅ لطفاً یکی از این کارها را انجام دهید:
+        ✅ Gamma ویژگی‌های زیر را دارد:<br/>
+        • پشتیبانی از تمام بارکدها<br/>
+        • <b>Batch scan</b> برای اسکن چندگانه<br/>
+        • بدون تبلیغ
       </p>
       <div style="margin-top:15px; display:flex; gap:8px; flex-direction:column;">
-        <button id="manualInstallBtn" style="background:#4CAF50; padding:12px;">📲 نصب دستی از گوگل‌پلی</button>
-        <button id="useCameraBtn" style="background:#2196f3; padding:12px;">📱 استفاده از دوربین گوشی</button>
-        <button onclick="closeInstallModal()" class="secondary" style="padding:12px;">❌ بستن و ادامهٔ کار</button>
+        <button id="manualInstallBtn" style="background:#4CAF50; padding:12px;">📲 نصب از گوگل‌پلی</button>
+        <button id="useCameraBtn" style="background:#2196f3; padding:12px;">🔄 امتحان مجدد با دوربین</button>
+        <button onclick="closeInstallModal()" class="secondary" style="padding:12px;">❌ لغو</button>
       </div>
     </div>
   </div>
@@ -388,6 +394,7 @@
     let DEVICE_NAME = localStorage.getItem('deviceName') || '';
     let LAST_SCAN_METHOD = localStorage.getItem('scanner') || 'camera';
     let CURRENT_CALC_TARGET = null;
+    let quaggaTimeout = null;
 
     // تنظیم نام دستگاه
     if (!DEVICE_NAME) {
@@ -405,137 +412,142 @@
     }
 
     const SCANNERS = [
-      { id: 'camera', name: '📸 اسکن با دوربین (داخلی)', desc: 'بدون نیاز به نصب برنامه — پشتیبانی از بارکد خطی و QR' },
-      { id: 'gamma', name: 'Gamma Barcode Scanner', desc: 'سریع، بدون تبلیغ، پشتیبانی از Batch Scan',
+      { id: 'camera', name: '📸 اسکن با دوربین (داخلی)', desc: 'پشتیبانی از Code 128 و Free 3 of 9 — fallback به Gamma در صورت نیاز' },
+      { id: 'gamma', name: 'Gamma Barcode Scanner', desc: 'بهترین گزینه برای Code 128 / Extended Code 39 — Batch Scan',
         intent: 'intent://scan/#Intent;scheme=scan;package=com.gamma.scan;end;',
         playUrl: 'https://play.google.com/store/apps/details?id=com.gamma.scan' },
       { id: 'zxing', name: 'ZXing Barcode Scanner', desc: 'رایگان، پایدار و پرکاربرد', 
         intent: 'intent://scan/#Intent;scheme=zxing;package=com.google.zxing.client.android;end;',
-        playUrl: 'https://play.google.com/store/apps/details?id=com.google.zxing.client.android' },
-      { id: 'easy', name: 'Easy Barcode Scanner', desc: 'رابط کاربری ساده',
-        intent: 'intent://scan/#Intent;scheme=scan;package=com.tecace.easybarcodescanner;end;',
-        playUrl: 'https://play.google.com/store/apps/details?id=com.tecace.easybarcodescanner' }
+        playUrl: 'https://play.google.com/store/apps/details?id=com.google.zxing.client.android' }
     ];
 
-    // === توابع ماشین‌حساب ===
+    // === ماشین‌حساب ===
     function openCalc(targetInputId) {
       CURRENT_CALC_TARGET = targetInputId;
       document.getElementById('calcDisplay').value = '';
       document.getElementById('calcModal').classList.remove('hidden');
     }
-
     function calcAppend(char) {
-      const disp = document.getElementById('calcDisplay');
-      disp.value += char;
+      document.getElementById('calcDisplay').value += char;
     }
-
     function calcBackspace() {
-      const disp = document.getElementById('calcDisplay');
-      disp.value = disp.value.slice(0, -1);
+      const v = document.getElementById('calcDisplay').value;
+      document.getElementById('calcDisplay').value = v.slice(0, -1);
     }
-
     function calcApply() {
-      const expr = document.getElementById('calcDisplay').value;
+      let expr = document.getElementById('calcDisplay').value;
       if (!expr.trim()) return alert('عبارتی وارد نشده است.');
-
-      const safeExpr = expr.replace(/[^0-9+\-*/().\s÷×]/g, '')
-                           .replace(/÷/g, '/')
-                           .replace(/×/g, '*');
+      expr = expr.replace(/÷/g,'/').replace(/×/g,'*');
       try {
-        const result = new Function('return (' + safeExpr + ')')();
-        if (isNaN(result) || !isFinite(result)) throw new Error('Invalid');
-
-        const target = document.getElementById(CURRENT_CALC_TARGET);
-        target.value = parseFloat(result).toFixed(2);
-        
-        if (CURRENT_CALC_TARGET.startsWith('add')) {
-          updateDiscrepancyAdd();
-        } else if (CURRENT_CALC_TARGET.startsWith('edit')) {
-          updateDiscrepancyEdit();
-        }
-
+        const result = new Function('return (' + expr + ')')();
+        if (isNaN(result) || !isFinite(result)) throw new Error();
+        const el = document.getElementById(CURRENT_CALC_TARGET);
+        el.value = parseFloat(result).toFixed(2);
+        if (CURRENT_CALC_TARGET.startsWith('add')) updateDiscrepancyAdd();
+        else if (CURRENT_CALC_TARGET.startsWith('edit')) updateDiscrepancyEdit();
         closeCalcModal();
       } catch (e) {
         alert('عبارت ریاضی نامعتبر است.');
       }
     }
-
     function closeCalcModal() {
       document.getElementById('calcModal').classList.add('hidden');
       CURRENT_CALC_TARGET = null;
     }
 
-    // === 🆕 اسکن داخلی با پشتیبانی از بارکد خطی (BarcodeDetector API) ===
-    let barcodeDetector = null;
-    let videoStream = null;
-    let scanInterval = null;
-
+    // === 🆕 اسکن هوشمند: Quagga2 + fallback به Gamma ===
     async function startCameraScan() {
       const video = document.getElementById('cameraVideo');
       const modal = document.getElementById('cameraModal');
+      modal.classList.remove('hidden');
 
-      // ✅ بررسی پشتیبانی از BarcodeDetector
-      if (!("BarcodeDetector" in window)) {
-        console.warn("BarcodeDetector not supported → falling back to Gamma");
-        launchExternalScanner('gamma');
-        return;
+      // بارگذاری Quagga2 (فقط اولین بار)
+      if (!window.Quagga) {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.3.0/dist/quagga.min.js';
+        document.head.appendChild(script);
+        await new Promise((resolve) => {
+          script.onload = resolve;
+          script.onerror = () => {
+            console.error("❌ Quagga2 load failed → fallback to Gamma");
+            stopCamera();
+            launchExternalScanner('gamma');
+          };
+        });
       }
 
-      try {
-        // ✅ دریافت دوربین (environment = دوربین پشت)
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
-        });
-        videoStream = stream;
-        video.srcObject = stream;
-
-        // ✅ پشتیبانی از همه فرمت‌های رایج (خطی + QR)
-        barcodeDetector = new BarcodeDetector({
-          formats: [
-            'qr_code',
-            'ean_13', 'ean_8',
-            'upc_a', 'upc_e',
-            'code_128', 'code_39', 'code_93',
-            'itf', 'codabar'
-          ]
-        });
-
-        modal.classList.remove('hidden');
-
-        // ✅ اسکن مداوم (هر 300ms)
-        scanInterval = setInterval(async () => {
-          if (!barcodeDetector || !video.srcObject || video.paused || video.ended) return;
-          try {
-            const barcodes = await barcodeDetector.detect(video);
-            if (barcodes.length > 0) {
-              const result = barcodes[0].rawValue?.trim();
-              if (result) {
-                clearInterval(scanInterval);
-                scanInterval = null;
-                stopCamera(); // ✅ فوری متوقف شود
-
-                // ✅ مقدار را وارد کن و جستجو را اجرا کن
-                const barcodeInput = document.getElementById('barcode');
-                barcodeInput.value = result;
-                barcodeInput.focus();
-                barcodeInput.select();
-                requestAnimationFrame(() => setTimeout(() => searchOrAdd(), 10));
-              }
-            }
-          } catch (err) {
-            console.error("[BarcodeDetector] Error:", err.message || err);
-            // fallback در صورت خطا
-            clearInterval(scanInterval);
-            scanInterval = null;
-            stopCamera();
-            alert("❌ خطا در اسکن داخلی. استفاده از Gamma Scanner...");
-            launchExternalScanner('gamma');
+      const config = {
+        inputStream: {
+          name: "Live",
+          type: "LiveStream",
+          target: video,
+          constraints: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: "environment"
           }
-        }, 300);
+        },
+        decoder: {
+          readers: [
+            'code_128_reader',
+            'code_39_reader',       // Standard
+            'code_39_vin_reader',   // ✅ Extended Code 39 = Free 3 of 9
+            'ean_reader',
+            'ean_8_reader',
+            'upc_reader',
+            'code_93_reader',
+            'codabar_reader',
+            'i2of5_reader',
+            'qr_reader'
+          ],
+          debug: { drawBoundingBox: false }
+        },
+        locator: {
+          patchSize: "medium",
+          halfSample: true
+        },
+        numOfWorkers: 2,
+        frequency: 15, // 15 بار در ثانیه
+        locate: true
+      };
 
-      } catch (err) {
-        console.error("[Camera] Access denied or unsupported:", err);
-        alert("❌ دسترسی به دوربین رد شد یا پشتیبانی نمی‌شود.\nاستفاده از Gamma Scanner...");
+      try {
+        Quagga.init(config, (err) => {
+          if (err) {
+            console.error("❌ Quagga init error:", err);
+            stopCamera();
+            launchExternalScanner('gamma');
+            return;
+          }
+
+          Quagga.start();
+          console.log("✅ Quagga2 started — scanning Code 128 / Extended Code 39");
+
+          // fallback پس از 5 ثانیه
+          quaggaTimeout = setTimeout(() => {
+            if (window.Quagga) {
+              console.warn("⏳ Timeout (5s) → fallback to Gamma");
+              stopCamera();
+              launchExternalScanner('gamma');
+            }
+          }, 5000);
+
+          Quagga.onDetected((result) => {
+            const code = result.codeResult?.code?.trim();
+            if (code) {
+              clearTimeout(quaggaTimeout);
+              Quagga.stop();
+              stopCamera();
+              document.getElementById('barcode').value = code;
+              document.getElementById('barcode').focus();
+              document.getElementById('barcode').select();
+              setTimeout(() => searchOrAdd(), 10);
+            }
+          });
+        });
+      } catch (e) {
+        console.error("❌ Quagga setup error:", e);
+        stopCamera();
         launchExternalScanner('gamma');
       }
     }
@@ -544,53 +556,45 @@
       const modal = document.getElementById('cameraModal');
       modal.classList.add('hidden');
 
-      if (scanInterval) {
-        clearInterval(scanInterval);
-        scanInterval = null;
+      if (quaggaTimeout) {
+        clearTimeout(quaggaTimeout);
+        quaggaTimeout = null;
       }
 
-      if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-        videoStream = null;
+      if (window.Quagga) {
+        try { Quagga.stop(); } catch (e) {}
       }
-
-      barcodeDetector = null;
 
       const video = document.getElementById('cameraVideo');
-      video.srcObject = null;
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach(t => t.stop());
+        video.srcObject = null;
+      }
     }
 
-    // === اسکنر خارجی (Gamma / ZXing / Easy) ===
     function launchExternalScanner(scannerId) {
       const scanner = SCANNERS.find(s => s.id === scannerId && s.intent);
-      if (!scanner) {
-        startCameraScan();
-        return;
-      }
+      if (!scanner) return startCameraScan();
 
-      // ارسال intent (فقط در اندروید)
       let opened = false;
       try {
         const w = window.open(scanner.intent, '_self');
         if (w) opened = true;
-      } catch (e) { /* silent */ }
+      } catch (e) {}
 
       setTimeout(() => {
         if (!opened) {
-          document.getElementById('appNameHere').textContent = scanner.name;
           document.getElementById('manualInstallBtn').onclick = () => {
             window.open(scanner.playUrl, '_blank');
             closeInstallModal();
           };
           document.getElementById('useCameraBtn').onclick = () => {
             closeInstallModal();
-            LAST_SCAN_METHOD = 'camera';
-            localStorage.setItem('scanner', 'camera');
             startCameraScan();
           };
           document.getElementById('installModal').classList.remove('hidden');
         }
-      }, 700);
+      }, 800);
     }
 
     function startScan() {
@@ -602,104 +606,71 @@
     }
 
     function changeScanner() {
-      let msg = 'لطفاً روش اسکن را انتخاب کنید:\n\n';
-      SCANNERS.forEach((s, i) => {
-        msg += `${i+1} → ${s.name}\n   ${s.desc}\n`;
-      });
-      msg += `\nشماره را وارد کنید (پیش‌فرض: 1):`;
-
+      let msg = 'روش اسکن را انتخاب کنید:\n\n';
+      SCANNERS.forEach((s, i) => msg += `${i+1} → ${s.name}\n   ${s.desc}\n`);
+      msg += '\nشماره را وارد کنید (پیش‌فرض: 1):';
       const choice = prompt(msg, '1');
       const idx = Math.max(0, parseInt(choice) - 1);
       const selected = SCANNERS[idx] || SCANNERS[0];
-
       LAST_SCAN_METHOD = selected.id;
       localStorage.setItem('scanner', selected.id);
-      alert(`✅ روش اسکن: ${selected.name}`);
+      alert(`✅ انتخاب شد: ${selected.name}`);
     }
 
-    // === محاسبه مغایرت ===
+    // === سایر توابع (بدون تغییر) ===
     function calculateDiscrepancy2(stock, count2Str, discrepancy1) {
       if (parseFloat(discrepancy1) === 0) {
         const c2 = count2Str !== '' ? parseFloat(count2Str) : null;
-        if (c2 === null || c2 === 0) {
-          return "0.00";
-        }
+        if (c2 === null || c2 === 0) return "0.00";
       }
       const c2 = count2Str !== '' ? parseFloat(count2Str) || 0 : 0;
       return (c2 - stock).toFixed(2);
     }
-
     function updateDiscrepancyAdd() {
-      const stock = parseFloat(document.getElementById('addStock').value) || 0;
+      const s = parseFloat(document.getElementById('addStock').value) || 0;
       const c1 = parseFloat(document.getElementById('addCount1').value) || 0;
       const c2 = document.getElementById('addCount2').value;
-      const disc1 = (c1 - stock).toFixed(2);
-      document.getElementById('addDisc1').textContent = disc1;
-      const disc2 = calculateDiscrepancy2(stock, c2, disc1);
-      document.getElementById('addDisc2').textContent = disc2;
+      document.getElementById('addDisc1').textContent = (c1 - s).toFixed(2);
+      document.getElementById('addDisc2').textContent = calculateDiscrepancy2(s, c2, (c1 - s).toFixed(2));
     }
-
     function updateDiscrepancyEdit() {
-      const stock = parseFloat(document.getElementById('editStock').value) || 0;
+      const s = parseFloat(document.getElementById('editStock').value) || 0;
       const c1 = parseFloat(document.getElementById('editCount1').value) || 0;
       const c2 = document.getElementById('editCount2').value;
-      const disc1 = (c1 - stock).toFixed(2);
-      document.getElementById('editDisc1').textContent = disc1;
-      const disc2 = calculateDiscrepancy2(stock, c2, disc1);
-      document.getElementById('editDisc2').textContent = disc2;
+      document.getElementById('editDisc1').textContent = (c1 - s).toFixed(2);
+      document.getElementById('editDisc2').textContent = calculateDiscrepancy2(s, c2, (c1 - s).toFixed(2));
     }
 
     // === لیست کشویی محل ===
     function getLocations() {
-      const set = new Set();
-      items.forEach(r => {
-        const loc = (r[8] || '').trim();
-        if (loc) set.add(loc);
-      });
+      const set = new Set(items.map(r => (r[8] || '').trim()).filter(x => x));
       return Array.from(set).sort();
     }
-
     function renderDropdown(id, locations) {
       const el = document.getElementById(id);
       if (!el) return;
       el.innerHTML = locations.length 
-        ? locations.map(l => `<div class="custom-select-option" onclick="selectLocation('${l.replace(/'/g,"\\'")}','${id}')">${l}</div>`).join('')
+        ? locations.map(l => `<div class="custom-select-option" onclick="selectLocation('${l.replace(/'/g,"\\\\'")}','${id}')">${l}</div>`).join('')
         : '<div class="custom-select-option" style="color:#999;">محلی وجود ندارد</div>';
     }
-
-    function toggleLocationDropdown(context) {
-      hideAllDropdowns();
-      const map = {
-        main: { input: 'globalLocation', dropdown: 'locationDropdown' },
-        add:  { input: 'addLocation',     dropdown: 'addLocationDropdown' },
-        edit: { input: 'editLocation',    dropdown: 'editLocationDropdown' }
-      };
-      const { dropdown } = map[context] || {};
-      if (!dropdown) return;
-      const el = document.getElementById(dropdown);
+    function toggleLocationDropdown(ctx) {
+      ['locationDropdown','addLocationDropdown','editLocationDropdown'].forEach(id => {
+        const e = document.getElementById(id); if (e) e.classList.add('hidden');
+      });
+      const map = { main: 'locationDropdown', add: 'addLocationDropdown', edit: 'editLocationDropdown' };
+      const dropdownId = map[ctx];
+      if (!dropdownId) return;
+      const el = document.getElementById(dropdownId);
       if (el.classList.contains('hidden')) {
-        renderDropdown(dropdown, getLocations());
+        renderDropdown(dropdownId, getLocations());
         el.classList.remove('hidden');
-        currentDropdown = context;
       }
     }
-
-    function hideAllDropdowns() {
-      ['locationDropdown','addLocationDropdown','editLocationDropdown'].forEach(id=>{
-        const e=document.getElementById(id); if(e) e.classList.add('hidden');
-      });
-      currentDropdown = null;
-    }
-
     function selectLocation(loc, dropdownId) {
-      const map = {
-        'locationDropdown': 'globalLocation',
-        'addLocationDropdown': 'addLocation',
-        'editLocationDropdown': 'editLocation'
-      };
+      const map = { locationDropdown: 'globalLocation', addLocationDropdown: 'addLocation', editLocationDropdown: 'editLocation' };
       const inputId = map[dropdownId] || dropdownId.replace('Dropdown', '');
       document.getElementById(inputId).value = loc;
-      hideAllDropdowns();
+      toggleLocationDropdown(null);
     }
 
     // === منطق اصلی ===
@@ -708,18 +679,15 @@
       const loc = document.getElementById('globalLocation').value.trim();
       if (!bc) return alert('لطفاً بارکد را وارد کنید.');
       const idx = items.findIndex(r => r[0] === bc && r[8] === loc);
-      if (idx !== -1) openEditModal(idx);
-      else openAddModal(bc, loc);
+      idx !== -1 ? openEditModal(idx) : openAddModal(bc, loc);
     }
 
     function openAddModal(bc, loc) {
-      const existing = items.find(r => r[0] === bc);
-      const stock = existing ? parseFloat(existing[9]) || 0 : 0;
-      
+      const stock = items.find(r => r[0] === bc)?.[9] || 0;
       document.getElementById('addBarcode').value = bc;
       document.getElementById('addLocation').value = loc;
       document.getElementById('addStock').value = stock;
-      document.getElementById('addCount1').value = stock; // ✅ فقط در افزودن: موجودی → شمارش۱
+      document.getElementById('addCount1').value = stock;
       document.getElementById('addCount2').value = '';
       document.getElementById('addTag').value = '';
       document.getElementById('addTeam').value = '';
@@ -735,11 +703,9 @@
       const c1 = parseFloat(document.getElementById('addCount1').value) || 0;
       const c2Raw = document.getElementById('addCount2').value;
       const c2 = c2Raw !== '' ? parseFloat(c2Raw) || 0 : 0;
-
       const disc1 = (c1 - stock).toFixed(2);
       const disc2 = calculateDiscrepancy2(stock, c2Raw, disc1);
-
-      const newRow = [
+      items.push([
         bc, name, c1, disc1, c2, disc2,
         document.getElementById('addTag').value.trim(),
         document.getElementById('addTeam').value.trim(),
@@ -747,29 +713,22 @@
         stock,
         document.getElementById('addNotes').value.trim(),
         getNowFa(), DEVICE_NAME
-      ];
-
-      items.push(newRow);
+      ]);
       localStorage.setItem('items', JSON.stringify(items));
       renderTable();
       closeAddModal();
       document.getElementById('barcode').value = '';
       document.getElementById('barcode').focus();
     }
-
-    function closeAddModal() {
-      document.getElementById('addModal').classList.add('hidden');
-    }
+    function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
 
     function openEditModal(idx) {
       currentEditIndex = idx;
-      const r = items[idx];
-      const stock = parseFloat(r[9]) || 0;
-
+      const r = items[idx], s = parseFloat(r[9]) || 0;
       document.getElementById('editBarcode').value = r[0];
       document.getElementById('editName').value = r[1];
-      document.getElementById('editStock').value = stock;
-      document.getElementById('editCount1').value = r[2] || '';   // ✅ اصلاح: مقدار واقعی شمارش۱
+      document.getElementById('editStock').value = s;
+      document.getElementById('editCount1').value = r[2] || '';
       document.getElementById('editCount2').value = r[4] != null ? r[4] : '';
       document.getElementById('editTag').value = r[6] || '';
       document.getElementById('editTeam').value = r[7] || '';
@@ -782,11 +741,10 @@
     function saveEdit() {
       if (currentEditIndex < 0) return;
       const r = [...items[currentEditIndex]];
-      const stock = parseFloat(document.getElementById('editStock').value) || 0;
+      const s = parseFloat(document.getElementById('editStock').value) || 0;
       const c1 = parseFloat(document.getElementById('editCount1').value) || 0;
       const c2Raw = document.getElementById('editCount2').value;
       const c2 = c2Raw !== '' ? parseFloat(c2Raw) || 0 : 0;
-
       r[1] = document.getElementById('editName').value.trim();
       r[2] = c1;
       r[4] = c2;
@@ -794,13 +752,11 @@
       r[7] = document.getElementById('editTeam').value.trim();
       r[8] = document.getElementById('editLocation').value.trim();
       r[10] = document.getElementById('editNotes').value.trim();
-      r[9] = stock;
+      r[9] = s;
       r[11] = getNowFa();
       r[12] = DEVICE_NAME;
-
-      r[3] = (c1 - stock).toFixed(2);
-      r[5] = calculateDiscrepancy2(stock, c2Raw, r[3]);
-
+      r[3] = (c1 - s).toFixed(2);
+      r[5] = calculateDiscrepancy2(s, c2Raw, r[3]);
       items[currentEditIndex] = r;
       localStorage.setItem('items', JSON.stringify(items));
       renderTable();
@@ -808,17 +764,15 @@
       document.getElementById('barcode').value = '';
       document.getElementById('barcode').focus();
     }
-
     function closeEditModal() {
       document.getElementById('editModal').classList.add('hidden');
       currentEditIndex = -1;
     }
 
-    // === import / export ===
+    // === import/export ===
     function loadExcel() {
       const file = document.getElementById('excelFile').files[0];
       if (!file) return alert('فایلی انتخاب نشده است.');
-      
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
@@ -826,57 +780,36 @@
           const wb = XLSX.read(data, { type: 'array' });
           const ws = wb.Sheets[wb.SheetNames[0]];
           const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
-
           if (json.length < 2) return alert('فایل خالی است.');
-
           const headers = json[0].map(h => String(h).trim().toLowerCase());
-          const mappings = {
-            'بارکد': 0, 'کد': 0, 'id': 0, 'barcode': 0,
-            'نام': 1, 'نام کالا': 1, 'کالا': 1, 'name': 1,
-            'موجودی': 9, 'stock': 9, 'quantity': 9,
-            'تگ': 6, 'label': 6,
-            'تیم': 7, 'team': 7,
-            'محل': 8, 'location': 8,
-            'شمارش1': 2, 'count1': 2, 'شمارش 1': 2,
-            'شمارش2': 4, 'count2': 4, 'شمارش 2': 4,
-            'توضیحات': 10, 'notes': 10
-          };
-
           items = [];
           for (let i = 1; i < json.length; i++) {
             const row = json[i];
             const bc = String(row[headers.indexOf('barcode')] || row[headers.indexOf('بارکد')] || row[0] || '').trim();
             if (!bc) continue;
-
             const getItem = (key) => {
-              for (let h of Object.keys(mappings)) {
+              const mapping = {0:'بارکد|barcode|id|کد',1:'نام|name|کالا',6:'تگ|label',7:'تیم|team',8:'محل|location',10:'توضیحات|notes'};
+              for (let h of mapping[key]?.split('|') || []) {
                 const idx = headers.indexOf(h);
-                if (idx !== -1 && mappings[h] === key) {
-                  return row[idx] != null ? String(row[idx]).trim() : '';
-                }
+                if (idx !== -1) return String(row[idx] || '').trim();
               }
               return '';
             };
-
-            const stock = parseFloat(getItem(9).replace(/,/g, '')) || 0;
-            const c1 = parseFloat(getItem(2).replace(/,/g, '')) || 0;
-            const c2 = parseFloat(getItem(4).replace(/,/g, '')) || 0;
-
+            const stock = parseFloat(getItem(9).replace(/,/g,'') || row[headers.indexOf('موجودی')] || 0) || 0;
+            const c1 = parseFloat(getItem(2).replace(/,/g,'') || row[headers.indexOf('شمارش1')] || 0) || 0;
+            const c2 = parseFloat(getItem(4).replace(/,/g,'') || row[headers.indexOf('شمارش2')] || 0) || 0;
             const disc1 = (c1 - stock).toFixed(2);
             const disc2 = calculateDiscrepancy2(stock, c2.toString(), disc1);
-
             items.push([
               bc, getItem(1), c1, disc1, c2, disc2,
               getItem(6), getItem(7), getItem(8), stock, getItem(10),
               getNowFa(), DEVICE_NAME
             ]);
           }
-
           localStorage.setItem('items', JSON.stringify(items));
           renderTable();
           alert(`✅ ${items.length} مورد import شد.`);
         } catch (err) {
-          console.error(err);
           alert('خطا در import: ' + (err.message || 'نامشخص'));
         }
       };
@@ -884,37 +817,22 @@
     }
 
     function exportExcel() {
-      if (items.length === 0) return alert('داده‌ای برای خروجی وجود ندارد.');
-
+      if (!items.length) return alert('داده‌ای برای خروجی وجود ندارد.');
       const wsData = [
-        ['بارکد', 'نام کالا', 'شمارش۱', 'مغایرت۱', 'شمارش۲', 'مغایرت۲', 'تگ', 'تیم', 'محل', 'موجودی', 'توضیحات', 'آخرین بروزرسانی', 'دستگاه'],
-        ...items.map(r => [
-          r[0], r[1], r[2], r[3], r[4], r[5],
-          r[6], r[7], r[8], r[9], r[10], r[11], r[12]
-        ])
+        ['بارکد','نام کالا','شمارش۱','مغایرت۱','شمارش۲','مغایرت۲','تگ','تیم','محل','موجودی','توضیحات','آخرین بروزرسانی','دستگاه'],
+        ...items.map(r => [r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8],r[9],r[10],r[11],r[12]])
       ];
-
       const ws = XLSX.utils.aoa_to_sheet(wsData);
-      ws['!cols'] = [
-        { wch: 15 }, { wch: 25 }, { wch: 8 }, { wch: 10 }, { wch: 8 }, { wch: 10 },
-        { wch: 12 }, { wch: 8 }, { wch: 15 }, { wch: 10 }, { wch: 20 },
-        { wch: 18 }, { wch: 20 }
-      ];
+      ws['!cols'] = [{wch:15},{wch:25},{wch:8},{wch:10},{wch:8},{wch:10},{wch:12},{wch:8},{wch:15},{wch:10},{wch:20},{wch:18},{wch:20}];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'انبار');
       XLSX.writeFile(wb, 'انبارگردانی_خروجی.xlsx');
     }
 
-    // === جدول ===
     function getNowFa() {
       return new Intl.DateTimeFormat('fa-IR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
       }).format(new Date()).replace(/،/g, ' ');
     }
 
@@ -926,51 +844,42 @@
 
     function applyFilters() {
       const global = document.getElementById('globalSearch').value.toLowerCase();
-      const inputs = document.querySelectorAll('.filter-input');
       filters = {};
-      inputs.forEach(inp => {
+      document.querySelectorAll('.filter-input').forEach(inp => {
         const c = parseInt(inp.dataset.col);
         const v = inp.value.toLowerCase();
         if (v) filters[c] = v;
       });
-
       const filtered = items.filter(row => {
         if (global && !row.some(cell => String(cell).toLowerCase().includes(global))) return false;
         for (let c in filters) if (!String(row[c] || '').toLowerCase().includes(filters[c])) return false;
         return true;
       });
-
       renderTableBody(filtered);
     }
 
     function renderTableBody(data) {
       const t = document.getElementById('tableBody');
-      if (data.length === 0) {
+      if (!data.length) {
         t.innerHTML = '<tr><td colspan="14" style="text-align:center;">داده‌ای یافت نشد.</td></tr>';
         return;
       }
-
       const dupMap = {};
-      data.forEach(r => {
-        const key = `${r[0]}|${r[8]}`;
-        dupMap[key] = (dupMap[key] || 0) + 1;
-      });
-
-      t.innerHTML = data.map((row, _) => {
-        const key = `${row[0]}|${row[8]}`;
-        const isDup = dupMap[key] > 1;
+      data.forEach(r => { const k = `${r[0]}|${r[8]}`; dupMap[k] = (dupMap[k] || 0) + 1; });
+      t.innerHTML = data.map((row, i) => {
+        const k = `${row[0]}|${row[8]}`;
+        const dup = dupMap[k] > 1;
         const idx = items.findIndex(r => r[0] === row[0] && r[8] === row[8]);
-
         return `<tr>
-          <td${isDup ? ' class="duplicate"' : ''}>${row[0]}</td>
-          <td${isDup ? ' class="duplicate"' : ''}>${row[1]}</td>
+          <td${dup?' class="duplicate"':''}>${row[0]}</td>
+          <td${dup?' class="duplicate"':''}>${row[1]}</td>
           <td>${row[2]}</td>
           <td class="discrepancy">${row[3]}</td>
           <td>${row[4]}</td>
           <td class="discrepancy">${row[5]}</td>
           <td>${row[6]}</td>
           <td>${row[7]}</td>
-          <td${isDup ? ' class="duplicate"' : ''}>${row[8]}</td>
+          <td${dup?' class="duplicate"':''}>${row[8]}</td>
           <td>${parseFloat(row[9]).toLocaleString('fa-IR')}</td>
           <td>${row[10]}</td>
           <td>${row[11]}</td>
@@ -1009,72 +918,49 @@
       document.getElementById('installModal').classList.add('hidden');
     }
 
-    // === راه‌اندازی اولیه ===
+    // === راه‌اندازی ===
     document.addEventListener('DOMContentLoaded', () => {
       renderTable();
       renderFilterRow();
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.custom-select-container')) {
-          hideAllDropdowns();
-        }
+      document.addEventListener('click', e => {
+        if (!e.target.closest('.custom-select-container')) toggleLocationDropdown(null);
       });
 
-      // اضافه کردن دکمهٔ ماشین‌حساب به فیلدهای شمارش
-      const fields = [
-        { id: 'addCount1', target: 'addCount1' },
-        { id: 'addCount2', target: 'addCount2' },
-        { id: 'editCount1', target: 'editCount1' },
-        { id: 'editCount2', target: 'editCount2' }
-      ];
-
-      fields.forEach(f => {
-        const el = document.getElementById(f.id);
+      // اضافه کردن دکمه ماشین‌حساب
+      ['addCount1','addCount2','editCount1','editCount2'].forEach(id => {
+        const el = document.getElementById(id);
         if (el) {
           const wrap = document.createElement('div');
           wrap.style.position = 'relative';
           el.parentNode.insertBefore(wrap, el);
           wrap.appendChild(el);
-          
           const btn = document.createElement('button');
           btn.innerHTML = '🧮';
-          btn.style.position = 'absolute';
-          btn.style.left = '8px';
-          btn.style.top = '50%';
-          btn.style.transform = 'translateY(-50%)';
-          btn.style.background = '#e0e0e0';
-          btn.style.border = 'none';
-          btn.style.width = '28px';
-          btn.style.height = '28px';
-          btn.style.borderRadius = '4px';
-          btn.style.cursor = 'pointer';
-          btn.onclick = () => openCalc(f.target);
-          
+          btn.style.cssText = 'position:absolute;left:8px;top:50%;transform:translateY(-50%);background:#e0e0e0;border:none;width:28px;height:28px;border-radius:4px;cursor:pointer;';
+          btn.onclick = () => openCalc(id);
           wrap.appendChild(btn);
           el.style.paddingLeft = '40px';
         }
       });
 
-      // پردازش اسکن خارجی (URL parameters)
-      const params = new URLSearchParams(window.location.search);
-      const bc = params.get('SCAN_RESULT')?.trim() || 
-                 params.get('barcode')?.trim() || 
-                 params.get('contents')?.trim() || 
-                 params.get('result')?.trim();
-
+      // پردازش URL parameters (برای اسکنرهای خارجی)
+      const bc = new URLSearchParams(window.location.search).get('SCAN_RESULT')?.trim() ||
+                 new URLSearchParams(window.location.search).get('barcode')?.trim() ||
+                 new URLSearchParams(window.location.search).get('contents')?.trim() ||
+                 new URLSearchParams(window.location.search).get('result')?.trim();
       if (bc) {
-        const barcodeInput = document.getElementById('barcode');
-        barcodeInput.value = bc;
-        barcodeInput.focus();
-        barcodeInput.select();
+        document.getElementById('barcode').value = bc;
+        document.getElementById('barcode').focus();
+        document.getElementById('barcode').select();
         history.replaceState(null, '', location.pathname);
         searchOrAdd();
       }
     });
 
-    console.log('✅ انبارگردانی سلطان — اسکن داخلی اکنون بارکد خطی و QR را پشتیبانی می‌کند.');
+    console.log('✅ انبارگردانی سلطان — پشتیبانی کامل از Code 128 و Free 3 of 9 (Extended Code 39)');
   </script>
 
-  <!-- ✅ XLSX برای import/export -->
+  <!-- XLSX برای import/export -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
 </html>
