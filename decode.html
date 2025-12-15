@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -411,7 +410,7 @@
       { id: 'zxing', name: 'ZXing Barcode Scanner', desc: 'رایگان، پایدار و پرکاربرد', 
         intent: 'intent://scan/#Intent;scheme=zxing;package=com.google.zxing.client.android;end;',
         playUrl: 'https://play.google.com/store/apps/details?id=com.google.zxing.client.android' },
-      { id: 'gamma', name: 'Gamma Barcode Scanner', desc: 'سریع و بدون تبلیغ (مثل اپلیکیشن شما)',
+      { id: 'gamma', name: 'Gamma Barcode Scanner', desc: 'سریع و بدون تبلیغ',
         intent: 'intent://scan/#Intent;scheme=scan;package=com.gamma.scan;end;',
         playUrl: 'https://play.google.com/store/apps/details?id=com.gamma.scan' },
       { id: 'easy', name: 'Easy Barcode Scanner', desc: 'رابط کاربری ساده',
@@ -662,19 +661,6 @@
       hideAllDropdowns();
     }
 
-    // === توابع زمان ===
-    function getNowFa() {
-      return new Intl.DateTimeFormat('fa-IR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-      }).format(new Date()).replace(/،/g, ' ');
-    }
-
     // === منطق اصلی ===
     function searchOrAdd() {
       const bc = document.getElementById('barcode').value.trim();
@@ -692,7 +678,7 @@
       document.getElementById('addBarcode').value = bc;
       document.getElementById('addLocation').value = loc;
       document.getElementById('addStock').value = stock;
-      document.getElementById('addCount1').value = stock; // پیش‌فرض برای کالای جدید
+      document.getElementById('addCount1').value = stock; // ✅ پیش‌فرض: موجودی → شمارش۱
       document.getElementById('addCount2').value = '';
       document.getElementById('addTag').value = '';
       document.getElementById('addTeam').value = '';
@@ -712,7 +698,6 @@
       const disc1 = (c1 - stock).toFixed(2);
       const disc2 = calculateDiscrepancy2(stock, c2Raw, disc1);
 
-      const now = new Date();
       const newRow = [
         bc, name, c1, disc1, c2, disc2,
         document.getElementById('addTag').value.trim(),
@@ -720,8 +705,7 @@
         document.getElementById('addLocation').value.trim(),
         stock,
         document.getElementById('addNotes').value.trim(),
-        getNowFa(), DEVICE_NAME,
-        now.getTime() // ✅ ستون 13: timestamp عددی برای مرتب‌سازی
+        getNowFa(), DEVICE_NAME
       ];
 
       items.push(newRow);
@@ -744,7 +728,7 @@
       document.getElementById('editBarcode').value = r[0];
       document.getElementById('editName').value = r[1];
       document.getElementById('editStock').value = stock;
-      document.getElementById('editCount1').value = r[2]; // ✅ اصلاح: مقدار قبلی شمارش۱ (نه موجودی)
+      document.getElementById('editCount1').value = stock; // ✅ پیش‌فرض: موجودی → شمارش۱
       document.getElementById('editCount2').value = r[4] || '';
       document.getElementById('editTag').value = r[6] || '';
       document.getElementById('editTeam').value = r[7] || '';
@@ -770,11 +754,8 @@
       r[8] = document.getElementById('editLocation').value.trim();
       r[10] = document.getElementById('editNotes').value.trim();
       r[9] = stock;
-      
-      const now = new Date();
-      r[11] = getNowFa(); // رشته فارسی برای نمایش
+      r[11] = getNowFa();
       r[12] = DEVICE_NAME;
-      r[13] = now.getTime(); // ✅ برای مرتب‌سازی
 
       r[3] = (c1 - stock).toFixed(2);
       r[5] = calculateDiscrepancy2(stock, c2Raw, r[3]);
@@ -843,12 +824,10 @@
             const disc1 = (c1 - stock).toFixed(2);
             const disc2 = calculateDiscrepancy2(stock, c2.toString(), disc1);
 
-            const now = new Date();
             items.push([
               bc, getItem(1), c1, disc1, c2, disc2,
               getItem(6), getItem(7), getItem(8), stock, getItem(10),
-              getNowFa(), DEVICE_NAME,
-              now.getTime() // ✅ timestamp برای داده‌های جدید
+              getNowFa(), DEVICE_NAME
             ]);
           }
 
@@ -866,7 +845,6 @@
     function exportExcel() {
       if (items.length === 0) return alert('داده‌ای برای خروجی وجود ندارد.');
 
-      // فقط 13 ستون اول را export می‌کنیم (تا timestamp مخفی در خروجی نیاید)
       const wsData = [
         ['بارکد', 'نام کالا', 'شمارش۱', 'مغایرت۱', 'شمارش۲', 'مغایرت۲', 'تگ', 'تیم', 'محل', 'موجودی', 'توضیحات', 'آخرین بروزرسانی', 'دستگاه'],
         ...items.map(r => [
@@ -887,16 +865,21 @@
     }
 
     // === جدول ===
+    function getNowFa() {
+      return new Intl.DateTimeFormat('fa-IR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).format(new Date()).replace(/،/g, ' ');
+    }
+
     function renderTable() {
       document.getElementById('totalCount').textContent = items.length;
-
-      // ✅ مرتب‌سازی بر اساس timestamp (ستون 13) — از جدید به قدیم
-      items.sort((a, b) => {
-        const tsA = a[13] || Date.now(); // برای سازگاری با داده‌های قدیمی
-        const tsB = b[13] || Date.now();
-        return tsB - tsA; // جدیدترها بالاتر
-      });
-
+      items.sort((a, b) => parseFloat(b[9]) - parseFloat(a[9]));
       applyFilters();
     }
 
@@ -1039,7 +1022,7 @@
       }
     });
 
-    console.log('✅ کد نهایی — با مرتب‌سازی بر اساس زمان و اصلاح ویرایش');
+    console.log('✅ کد کامل و نهایی — آمادهٔ استفاده');
   </script>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
