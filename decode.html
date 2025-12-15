@@ -119,21 +119,37 @@
     }
 
     #cameraVideo {
-      width: 100%;
-      max-height: 70vh;
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
       background: #000;
       display: block;
-      margin: 0 auto;
     }
     .scanner-frame {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 200px;
-      height: 200px;
-      margin: -100px 0 0 -100px;
+      top: 20%;
+      left: 5%;
+      width: 90%;
+      height: 60%;
       border: 2px solid #2196f3;
       box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+      pointer-events: none;
+      background: 
+        linear-gradient(rgba(33,150,243,0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(33,150,243,0.2) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .scan-hint {
+      position: absolute;
+      top: 5%;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      color: white;
+      font-size: 14px;
+      text-shadow: 0 1px 3px #000;
+      padding: 0 20px;
       pointer-events: none;
     }
 
@@ -232,14 +248,17 @@
 
   <!-- مدال اسکن داخلی -->
   <div id="cameraModal" class="modal hidden">
-    <div class="modal-content" style="padding:0; max-width:100%; width:100%; max-height:100%;">
+    <div class="modal-content" style="padding:0; width:100vw; height:100vh; max-width:none; max-height:none;">
       <div style="position:relative; background:#000;">
         <video id="cameraVideo" playsinline></video>
         <div class="scanner-frame"></div>
+        <div class="scan-hint">
+          🔍 بارکد را <strong>کاملاً داخل چهارچوب آبی</strong> قرار دهید — ابتدا و انتها باید دیده شود.<br>
+          📱 ثابت نگه دارید — اسکن خودکار پس از ~۱ ثانیه انجام می‌شود.
+        </div>
       </div>
       <div style="padding:16px; text-align:center;">
         <button onclick="stopCamera()" class="danger" style="width:auto; padding:10px 20px;">⏹️ توقف اسکن</button>
-        <p style="margin-top:10px; font-size:14px; color:#666;">جهت اسکن، بارکد را در داخل چهارچوب قرار دهید.</p>
       </div>
     </div>
   </div>
@@ -363,7 +382,6 @@
   </div>
 
   <script>
-    // === متغیرهای سیستم ===
     let items = JSON.parse(localStorage.getItem('items')) || [];
     let filters = {};
     let currentEditIndex = -1;
@@ -375,7 +393,6 @@
     let lastScannedValue = '';
     let lastScanTime = 0;
 
-    // تنظیم نام دستگاه
     if (!DEVICE_NAME) {
       const ua = navigator.userAgent;
       let device = 'نامشخص';
@@ -390,57 +407,28 @@
       localStorage.setItem('deviceName', DEVICE_NAME);
     }
 
-    // === توابع ماشین‌حساب ===
-    function openCalc(targetInputId) {
-      CURRENT_CALC_TARGET = targetInputId;
-      document.getElementById('calcDisplay').value = '';
-      document.getElementById('calcModal').classList.remove('hidden');
-    }
-
-    function calcAppend(char) {
-      const disp = document.getElementById('calcDisplay');
-      disp.value += char;
-    }
-
-    function calcBackspace() {
-      const disp = document.getElementById('calcDisplay');
-      disp.value = disp.value.slice(0, -1);
-    }
-
+    // === ماشین‌حساب ===
     let CURRENT_CALC_TARGET = null;
-
+    function openCalc(id) { CURRENT_CALC_TARGET = id; document.getElementById('calcDisplay').value = ''; document.getElementById('calcModal').classList.remove('hidden'); }
+    function calcAppend(c) { document.getElementById('calcDisplay').value += c; }
+    function calcBackspace() { const e = document.getElementById('calcDisplay'); e.value = e.value.slice(0, -1); }
     function calcApply() {
       const expr = document.getElementById('calcDisplay').value;
       if (!expr.trim()) return alert('عبارتی وارد نشده است.');
-
-      const safeExpr = expr.replace(/[^0-9+\-*/().\s÷×]/g, '')
-                           .replace(/÷/g, '/')
-                           .replace(/×/g, '*');
+      const safe = expr.replace(/[^0-9+\-*/().\s÷×]/g, '').replace(/÷/g, '/').replace(/×/g, '*');
       try {
-        const result = new Function('return (' + safeExpr + ')')();
-        if (isNaN(result) || !isFinite(result)) throw new Error('Invalid');
-
-        const target = document.getElementById(CURRENT_CALC_TARGET);
-        target.value = parseFloat(result).toFixed(2);
-        
-        if (CURRENT_CALC_TARGET.startsWith('add')) {
-          updateDiscrepancyAdd();
-        } else if (CURRENT_CALC_TARGET.startsWith('edit')) {
-          updateDiscrepancyEdit();
-        }
-
+        const r = new Function('return (' + safe + ')')();
+        if (isNaN(r) || !isFinite(r)) throw '';
+        const t = document.getElementById(CURRENT_CALC_TARGET);
+        t.value = parseFloat(r).toFixed(2);
+        if (CURRENT_CALC_TARGET.startsWith('add')) updateDiscrepancyAdd();
+        else if (CURRENT_CALC_TARGET.startsWith('edit')) updateDiscrepancyEdit();
         closeCalcModal();
-      } catch (e) {
-        alert('عبارت ریاضی نامعتبر است.');
-      }
+      } catch (e) { alert('عبارت ریاضی نامعتبر است.'); }
     }
+    function closeCalcModal() { document.getElementById('calcModal').classList.add('hidden'); CURRENT_CALC_TARGET = null; }
 
-    function closeCalcModal() {
-      document.getElementById('calcModal').classList.add('hidden');
-      CURRENT_CALC_TARGET = null;
-    }
-
-    // === ✅ اسکن داخلی — فقط دوربین، بدون هیچ فالبکی ===
+    // === ✅ اسکن دقیق با سرعت متعادل (300ms) ===
     async function startCameraScan() {
       const video = document.getElementById('cameraVideo');
       const modal = document.getElementById('cameraModal');
@@ -456,26 +444,20 @@
             facingMode: "environment",
             width: { ideal: 1920 },
             height: { ideal: 1080 },
-            frameRate: { ideal: 30 }
+            frameRate: { ideal: 24 } // کاهش به 24 برای پایداری
           }
         });
         videoStream = stream;
         video.srcObject = stream;
 
         barcodeDetector = new BarcodeDetector({
-          formats: [
-            'qr_code', 'ean_13', 'ean_8', 'upc_a', 'upc_e',
-            'code_128', 'code_39', 'code_93', 'itf', 'codabar'
-          ]
+          formats: ['qr_code','ean_13','ean_8','upc_a','upc_e','code_128','code_39','code_93','itf','codabar']
         });
 
         modal.classList.remove('hidden');
+        video.play().catch(console.warn);
 
-        video.onloadedmetadata = () => {
-          video.play().catch(e => console.warn("Video play failed:", e));
-        };
-
-        // 🔍 اسکن پرسرعت + debounce
+        // ✅ اسکن هر 300ms (بهینه برای دقت + پایداری)
         scanInterval = setInterval(async () => {
           if (!barcodeDetector || !video.srcObject || video.paused || video.ended || video.readyState < 2) return;
 
@@ -483,10 +465,10 @@
             const barcodes = await barcodeDetector.detect(video);
             if (barcodes.length > 0) {
               const value = (barcodes[0].rawValue || '').trim();
-              if (!value || value.length < 4) return; // ✅ فیلتر طول
+              if (!value || value.length < 4) return;
 
               const now = Date.now();
-              if (value === lastScannedValue && now - lastScanTime < 1500) return; // ✅ debounce
+              if (value === lastScannedValue && now - lastScanTime < 1500) return;
 
               lastScannedValue = value;
               lastScanTime = now;
@@ -495,19 +477,18 @@
               scanInterval = null;
               stopCamera();
 
-              const barcodeInput = document.getElementById('barcode');
-              barcodeInput.value = value;
-              barcodeInput.focus();
-              barcodeInput.select();
-              setTimeout(() => searchOrAdd(), 50);
+              document.getElementById('barcode').value = value;
+              document.getElementById('barcode').focus();
+              document.getElementById('barcode').select();
+              setTimeout(searchOrAdd, 100); // کمی تأخیر برای رندر UI
             }
           } catch (err) {
-            console.error("[Scan] Internal error:", err.message || err);
+            console.warn("[Scan] Frame error:", err.message || err);
           }
-        }, 100); // ✅ 10x faster
+        }, 300); // ✅ کلیدی: 300ms → تعادل بین سرعت و دقت
 
       } catch (err) {
-        console.error("[Camera] Access error:", err);
+        console.error("[Camera] Error:", err);
         alert("❌ دسترسی به دوربین رد شد یا پشتیبانی نمی‌شود.\nلطفاً دسترسی را فعال کنید.");
       }
     }
@@ -522,7 +503,7 @@
       }
 
       if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
+        videoStream.getTracks().forEach(t => t.stop());
         videoStream = null;
       }
 
@@ -536,16 +517,14 @@
     }
 
     function startScan() {
-      startCameraScan(); // ✅ فقط اسکن داخلی — بدون رفتن به Gamma یا هر برنامه‌ای
+      startCameraScan();
     }
 
-    // === محاسبه مغایرت ===
+    // === بقیه توابع (بدون تغییر) ===
     function calculateDiscrepancy2(stock, count2Str, discrepancy1) {
       if (parseFloat(discrepancy1) === 0) {
         const c2 = count2Str !== '' ? parseFloat(count2Str) : null;
-        if (c2 === null || c2 === 0) {
-          return "0.00";
-        }
+        if (c2 === null || c2 === 0) return "0.00";
       }
       const c2 = count2Str !== '' ? parseFloat(count2Str) || 0 : 0;
       return (c2 - stock).toFixed(2);
@@ -571,13 +550,9 @@
       document.getElementById('editDisc2').textContent = disc2;
     }
 
-    // === لیست کشویی محل ===
     function getLocations() {
       const set = new Set();
-      items.forEach(r => {
-        const loc = (r[8] || '').trim();
-        if (loc) set.add(loc);
-      });
+      items.forEach(r => { const loc = (r[8] || '').trim(); if (loc) set.add(loc); });
       return Array.from(set).sort();
     }
 
@@ -624,7 +599,6 @@
       hideAllDropdowns();
     }
 
-    // === منطق اصلی ===
     function searchOrAdd() {
       const bc = document.getElementById('barcode').value.trim();
       const loc = document.getElementById('globalLocation').value.trim();
@@ -736,11 +710,9 @@
       currentEditIndex = -1;
     }
 
-    // === import / export ===
     function loadExcel() {
       const file = document.getElementById('excelFile').files[0];
       if (!file) return alert('فایلی انتخاب نشده است.');
-      
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
@@ -748,7 +720,6 @@
           const wb = XLSX.read(data, { type: 'array' });
           const ws = wb.Sheets[wb.SheetNames[0]];
           const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
-
           if (json.length < 2) return alert('فایل خالی است.');
 
           const headers = json[0].map(h => String(h).trim().toLowerCase());
@@ -827,7 +798,6 @@
       XLSX.writeFile(wb, 'انبارگردانی_خروجی.xlsx');
     }
 
-    // === جدول ===
     function getNowFa() {
       return new Intl.DateTimeFormat('fa-IR', {
         year: 'numeric',
@@ -878,10 +848,10 @@
         dupMap[key] = (dupMap[key] || 0) + 1;
       });
 
-      t.innerHTML = data.map((row, idx) => {
+      t.innerHTML = data.map((row, _) => {
         const key = `${row[0]}|${row[8]}`;
         const isDup = dupMap[key] > 1;
-        const realIdx = items.findIndex(r => r[0] === row[0] && r[8] === row[8]);
+        const idx = items.findIndex(r => r[0] === row[0] && r[8] === row[8]);
 
         return `<tr>
           <td${isDup ? ' class="duplicate"' : ''}>${row[0]}</td>
@@ -898,8 +868,8 @@
           <td>${row[11]}</td>
           <td>${row[12]}</td>
           <td class="actions">
-            <button class="btn-icon" style="background:#1976d2;" onclick="openEditModal(${realIdx})">✏️</button>
-            <button class="btn-icon danger" onclick="removeItem(${realIdx})">🗑️</button>
+            <button class="btn-icon" style="background:#1976d2;" onclick="openEditModal(${idx})">✏️</button>
+            <button class="btn-icon danger" onclick="removeItem(${idx})">🗑️</button>
           </td>
         </tr>`;
       }).join('');
@@ -927,7 +897,6 @@
       f.innerHTML = headers.map((_,i)=>`<th><input type="text" class="filter-input" data-col="${i}" placeholder="فیلتر..." oninput="applyFilters()"></th>`).join('') + '<th></th>';
     }
 
-    // === راه‌اندازی اولیه ===
     document.addEventListener('DOMContentLoaded', () => {
       renderTable();
       renderFilterRow();
@@ -937,7 +906,7 @@
         }
       });
 
-      // اضافه کردن دکمهٔ ماشین‌حساب به فیلدهای شمارش
+      // ماشین‌حساب روی فیلدهای عددی
       const fields = [
         { id: 'addCount1', target: 'addCount1' },
         { id: 'addCount2', target: 'addCount2' },
@@ -972,27 +941,24 @@
         }
       });
 
-      // پردازش اسکن خارجی (URL parameters) — برای سازگاری با Gamma در آینده
+      // پشتیبانی از لینک اسکن خارجی (در صورت نیاز آینده)
       const params = new URLSearchParams(window.location.search);
       const bc = params.get('SCAN_RESULT')?.trim() || 
                  params.get('barcode')?.trim() || 
                  params.get('contents')?.trim() || 
                  params.get('result')?.trim();
-
       if (bc) {
-        const barcodeInput = document.getElementById('barcode');
-        barcodeInput.value = bc;
-        barcodeInput.focus();
-        barcodeInput.select();
+        document.getElementById('barcode').value = bc;
+        document.getElementById('barcode').focus();
+        document.getElementById('barcode').select();
         history.replaceState(null, '', location.pathname);
-        searchOrAdd();
+        setTimeout(searchOrAdd, 150);
       }
     });
 
-    console.log('✅ انبارگردانی سلطان — اسکن داخلی فقط با دوربین. بدون fallback.');
+    console.log('✅ نسخه نهایی — اسکن داخلی با سرعت متعادل (300ms) برای دقت حداکثری.');
   </script>
 
-  <!-- ✅ XLSX برای import/export -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
 </html>
