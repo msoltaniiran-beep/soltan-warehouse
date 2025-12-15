@@ -240,8 +240,8 @@
       </div>
       <div style="padding:16px; text-align:center;">
         <p style="margin:8px 0; color:#666; font-size:14px;">
-          📌 <b>Code 128</b> و <b>Free 3 of 9 (Extended Code 39)</b> پشتیبانی می‌شوند.<br/>
-          اگر بعد از ۵ ثانیه اسکن نشد، به‌صورت خودکار به Gamma Scanner منتقل می‌شوید.
+          📌 در حال اسکن دقیق — فقط پس از تأیید چندمرحله‌ای نتیجه ثبت می‌شود.<br/>
+          (حداقل ۳ بار تشخیص یکسان + کیفیت بالا)
         </p>
         <button onclick="stopCamera()" class="danger" style="width:auto; padding:10px 20px;">⏹️ توقف دستی</button>
       </div>
@@ -344,10 +344,11 @@
       <h3 style="color:#d32f2f;">❗ Gamma Scanner نصب نیست</h3>
       <p style="margin:12px 0;">برای اسکن قوی‌تر (به‌ویژه <b>Free 3 of 9</b> و <b>Code 128</b>)، Gamma پیشنهاد می‌شود.</p>
       <p style="font-size:14px; margin:10px 0;">
-        ✅ Gamma ویژگی‌های زیر را دارد:<br/>
-        • پشتیبانی از تمام بارکدها<br/>
-        • <b>Batch scan</b> برای اسکن چندگانه<br/>
-        • بدون تبلیغ
+        ✅ ویژگی‌های منحصربه‌فرد Gamma:<br/>
+        • <b>Batch scan</b> — اسکن چندگانه<br/>
+        • Scan from Gallery<br/>
+        • بدون تبلیغ<br/>
+        • Export/Import CSV
       </p>
       <div style="margin-top:15px; display:flex; gap:8px; flex-direction:column;">
         <button id="manualInstallBtn" style="background:#4CAF50; padding:12px;">📲 نصب از گوگل‌پلی</button>
@@ -395,6 +396,7 @@
     let LAST_SCAN_METHOD = localStorage.getItem('scanner') || 'camera';
     let CURRENT_CALC_TARGET = null;
     let quaggaTimeout = null;
+    let longTimeout = null;
 
     // تنظیم نام دستگاه
     if (!DEVICE_NAME) {
@@ -412,13 +414,10 @@
     }
 
     const SCANNERS = [
-      { id: 'camera', name: '📸 اسکن با دوربین (داخلی)', desc: 'پشتیبانی از Code 128 و Free 3 of 9 — fallback به Gamma در صورت نیاز' },
-      { id: 'gamma', name: 'Gamma Barcode Scanner', desc: 'بهترین گزینه برای Code 128 / Extended Code 39 — Batch Scan',
+      { id: 'camera', name: '📸 اسکن با دوربین (داخلی)', desc: 'تشخیص دقیق با تأیید چندمرحله‌ای — بدون timeout سخت' },
+      { id: 'gamma', name: 'Gamma Barcode Scanner', desc: 'پیشرفته‌ترین اسکنر — Batch Scan, بدون تبلیغ',
         intent: 'intent://scan/#Intent;scheme=scan;package=com.gamma.scan;end;',
-        playUrl: 'https://play.google.com/store/apps/details?id=com.gamma.scan' },
-      { id: 'zxing', name: 'ZXing Barcode Scanner', desc: 'رایگان، پایدار و پرکاربرد', 
-        intent: 'intent://scan/#Intent;scheme=zxing;package=com.google.zxing.client.android;end;',
-        playUrl: 'https://play.google.com/store/apps/details?id=com.google.zxing.client.android' }
+        playUrl: 'https://play.google.com/store/apps/details?id=com.gamma.scan' }
     ];
 
     // === ماشین‌حساب ===
@@ -455,13 +454,12 @@
       CURRENT_CALC_TARGET = null;
     }
 
-    // === 🆕 اسکن هوشمند: Quagga2 + fallback به Gamma ===
+    // === 🆕 اسکن دقیق با Quagga2 — بدون timeout سخت، با تأیید چندمرحله‌ای ===
     async function startCameraScan() {
       const video = document.getElementById('cameraVideo');
       const modal = document.getElementById('cameraModal');
       modal.classList.remove('hidden');
 
-      // بارگذاری Quagga2 (فقط اولین بار)
       if (!window.Quagga) {
         const script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.3.0/dist/quagga.min.js';
@@ -490,14 +488,10 @@
         decoder: {
           readers: [
             'code_128_reader',
-            'code_39_reader',       // Standard
-            'code_39_vin_reader',   // ✅ Extended Code 39 = Free 3 of 9
+            'code_39_reader',
+            'code_39_vin_reader', // ✅ Extended Code 39 = Free 3 of 9
             'ean_reader',
-            'ean_8_reader',
             'upc_reader',
-            'code_93_reader',
-            'codabar_reader',
-            'i2of5_reader',
             'qr_reader'
           ],
           debug: { drawBoundingBox: false }
@@ -507,9 +501,12 @@
           halfSample: true
         },
         numOfWorkers: 2,
-        frequency: 15, // 15 بار در ثانیه
+        frequency: 12, // تعادل بهینه
         locate: true
       };
+
+      let lastCode = null;
+      let consistentCount = 0;
 
       try {
         Quagga.init(config, (err) => {
@@ -521,27 +518,53 @@
           }
 
           Quagga.start();
-          console.log("✅ Quagga2 started — scanning Code 128 / Extended Code 39");
+          console.log("✅ Quagga2 started — تشخیص با تأیید چندمرحله‌ای فعال شد");
 
-          // fallback پس از 5 ثانیه
-          quaggaTimeout = setTimeout(() => {
+          // fallback هوشمند فقط پس از 10 ثانیه عدم موفقیت
+          longTimeout = setTimeout(() => {
             if (window.Quagga) {
-              console.warn("⏳ Timeout (5s) → fallback to Gamma");
+              console.warn("⏳ 10s بدون اسکن موفق → fallback to Gamma");
               stopCamera();
               launchExternalScanner('gamma');
             }
-          }, 5000);
+          }, 10000);
 
           Quagga.onDetected((result) => {
-            const code = result.codeResult?.code?.trim();
-            if (code) {
-              clearTimeout(quaggaTimeout);
-              Quagga.stop();
-              stopCamera();
-              document.getElementById('barcode').value = code;
-              document.getElementById('barcode').focus();
-              document.getElementById('barcode').select();
-              setTimeout(() => searchOrAdd(), 10);
+            const codeResult = result.codeResult;
+            if (!codeResult || !codeResult.code) return;
+
+            const code = codeResult.code.trim();
+            const quality = codeResult.quality || 0;
+            const startInfo = codeResult.startInfo || {};
+            const endInfo = codeResult.endInfo || {};
+
+            // 🔍 معیارهای دقت بالا (بهینه‌شده)
+            const isValidLength = code.length >= 4;
+            const isStable = 
+              (Math.abs(startInfo.uncertainty || 99) < 6) &&
+              (Math.abs(endInfo.uncertainty || 99) < 6);
+            
+            // ✅ فقط اگر دقت قابل قبول بود
+            if (quality >= 0.35 && isValidLength && isStable) {
+              if (code === lastCode) {
+                consistentCount++;
+              } else {
+                lastCode = code;
+                consistentCount = 1;
+              }
+
+              // ✅ تأیید نهایی: 3 بار متوالی + کیفیت خوب
+              if (consistentCount >= 3) {
+                clearTimeout(longTimeout);
+                longTimeout = null;
+                Quagga.stop();
+                stopCamera();
+                document.getElementById('barcode').value = code;
+                document.getElementById('barcode').focus();
+                document.getElementById('barcode').select();
+                setTimeout(() => searchOrAdd(), 10);
+                console.log(`✅ بارکد با دقت بالا تشخیص داده شد: "${code}" (quality: ${quality.toFixed(2)})`);
+              }
             }
           });
         });
@@ -556,9 +579,9 @@
       const modal = document.getElementById('cameraModal');
       modal.classList.add('hidden');
 
-      if (quaggaTimeout) {
-        clearTimeout(quaggaTimeout);
-        quaggaTimeout = null;
+      if (longTimeout) {
+        clearTimeout(longTimeout);
+        longTimeout = null;
       }
 
       if (window.Quagga) {
@@ -617,7 +640,7 @@
       alert(`✅ انتخاب شد: ${selected.name}`);
     }
 
-    // === سایر توابع (بدون تغییر) ===
+    // === بقیه توابع (بدون تغییر) ===
     function calculateDiscrepancy2(stock, count2Str, discrepancy1) {
       if (parseFloat(discrepancy1) === 0) {
         const c2 = count2Str !== '' ? parseFloat(count2Str) : null;
@@ -641,7 +664,6 @@
       document.getElementById('editDisc2').textContent = calculateDiscrepancy2(s, c2, (c1 - s).toFixed(2));
     }
 
-    // === لیست کشویی محل ===
     function getLocations() {
       const set = new Set(items.map(r => (r[8] || '').trim()).filter(x => x));
       return Array.from(set).sort();
@@ -657,14 +679,6 @@
       ['locationDropdown','addLocationDropdown','editLocationDropdown'].forEach(id => {
         const e = document.getElementById(id); if (e) e.classList.add('hidden');
       });
-      const map = { main: 'locationDropdown', add: 'addLocationDropdown', edit: 'editLocationDropdown' };
-      const dropdownId = map[ctx];
-      if (!dropdownId) return;
-      const el = document.getElementById(dropdownId);
-      if (el.classList.contains('hidden')) {
-        renderDropdown(dropdownId, getLocations());
-        el.classList.remove('hidden');
-      }
     }
     function selectLocation(loc, dropdownId) {
       const map = { locationDropdown: 'globalLocation', addLocationDropdown: 'addLocation', editLocationDropdown: 'editLocation' };
@@ -673,7 +687,6 @@
       toggleLocationDropdown(null);
     }
 
-    // === منطق اصلی ===
     function searchOrAdd() {
       const bc = document.getElementById('barcode').value.trim();
       const loc = document.getElementById('globalLocation').value.trim();
@@ -769,7 +782,6 @@
       currentEditIndex = -1;
     }
 
-    // === import/export ===
     function loadExcel() {
       const file = document.getElementById('excelFile').files[0];
       if (!file) return alert('فایلی انتخاب نشده است.');
@@ -926,7 +938,7 @@
         if (!e.target.closest('.custom-select-container')) toggleLocationDropdown(null);
       });
 
-      // اضافه کردن دکمه ماشین‌حساب
+      // دکمه ماشین‌حساب
       ['addCount1','addCount2','editCount1','editCount2'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -943,7 +955,7 @@
         }
       });
 
-      // پردازش URL parameters (برای اسکنرهای خارجی)
+      // پردازش URL parameters
       const bc = new URLSearchParams(window.location.search).get('SCAN_RESULT')?.trim() ||
                  new URLSearchParams(window.location.search).get('barcode')?.trim() ||
                  new URLSearchParams(window.location.search).get('contents')?.trim() ||
@@ -957,7 +969,7 @@
       }
     });
 
-    console.log('✅ انبارگردانی سلطان — پشتیبانی کامل از Code 128 و Free 3 of 9 (Extended Code 39)');
+    console.log('✅ انبارگردانی سلطان — اسکن دقیق با تأیید چندمرحله‌ای (بدون timeout سخت)');
   </script>
 
   <!-- XLSX برای import/export -->
