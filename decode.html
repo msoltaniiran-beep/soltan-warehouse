@@ -1,464 +1,4 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>انبارگردانی سلطان</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Vazir', 'IRANSans', Tahoma, sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-    body { background: #f9fafb; padding: 12px; }
-    .card { background: white; border-radius: 12px; padding: 16px; margin: 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    input, select, textarea, button {
-      width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ccc;
-      border-radius: 8px; font-size: 16px; text-align: right;
-    }
-    input[readonly] { background-color: #f5f5f5; }
-    input[type="number"] { direction: ltr; text-align: right; }
-    button { background: #2e7d32; color: white; border: none; font-weight: bold; cursor: pointer; }
-    button.scan { background: #1976d2; }
-    button.secondary { background: #757575; }
-    button.danger { background: #c62828; }
-    .hidden { display: none; }
-    .table-container {
-      overflow-x: auto;
-      max-height: 350px;
-      overflow-y: auto;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-    }
-    .table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: right; }
-    .table th { background: #e8f5e9; position: sticky; top: 0; }
-    .table thead tr:nth-child(2) th { background: #f1f8e9; padding: 4px; }
-    .discrepancy { font-weight: bold; color: #c62828; }
-    .duplicate { background-color: #ffebee !important; }
-    .actions { text-align: center; white-space: nowrap; }
-    .btn-icon { width: auto; padding: 5px 10px; font-size: 14px; margin: 2px; }
-    h2, h3 { text-align: center; color: #2e7d32; margin-bottom: 12px; }
-    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
-    .toolbar > * { flex: 1; min-width: 160px; }
-    .tabs { display: flex; gap: 6px; margin-bottom: 16px; }
-    .tab-btn {
-      flex: 1;
-      padding: 10px 8px;
-      background: #e9ecef;
-      border: none;
-      border-radius: 8px 8px 0 0;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 15px;
-    }
-    .tab-btn.active { background: #2e7d32; color: white; }
-    .tab-content { display: none; padding-top: 16px; border-top: 2px solid #2e7d32; }
-    .tab-content.active { display: block; }
-    .modal {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.4);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    .modal-content {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      width: 95%;
-      max-width: 500px;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    }
-    .modal.hidden { display: none; }
-    .filter-input { width: 100% !important; font-size: 12px !important; padding: 4px 6px !important; }
-    .custom-select-container {
-      position: relative;
-      width: 100%;
-    }
-    .custom-select-container input {
-      padding-right: 36px;
-    }
-    .select-arrow {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      pointer-events: auto;
-      cursor: pointer;
-      color: #757575;
-      font-size: 14px;
-    }
-    .custom-select-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: white;
-      border: 1px solid #aaa;
-      border-top: none;
-      border-radius: 0 0 8px 8px;
-      z-index: 10;
-      max-height: 200px;
-      overflow-y: auto;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .custom-select-dropdown.hidden { display: none; }
-    .custom-select-option {
-      padding: 10px 12px;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
-      font-size: 15px;
-    }
-    .custom-select-option:hover { background: #f0f8f0; }
-    .custom-select-option:last-child { border-bottom: none; }
-    #cameraVideo {
-      width: 100vw;
-      height: 100vh;
-      object-fit: contain;
-      background: #000;
-      display: block;
-    }
-    .scanner-frame {
-      position: absolute;
-      top: 25%;
-      left: 10%;
-      width: 80%;
-      height: 50%;
-      border: 3px solid #2196f3;
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.6);
-      pointer-events: none;
-      border-radius: 4px;
-    }
-    .scan-hint {
-      position: absolute;
-      top: 8%;
-      left: 0;
-      width: 100%;
-      text-align: center;
-      color: white;
-      font-size: 16px;
-      text-shadow: 0 1px 4px #000;
-      padding: 0 20px;
-      pointer-events: none;
-    }
-    .zoom-controls {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 12px;
-      z-index: 100;
-    }
-    .zoom-btn {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.85);
-      border: none;
-      font-size: 24px;
-      font-weight: bold;
-      color: #1976d2;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-      cursor: pointer;
-    }
-    .calc-btn { 
-      background: #e0e0e0; 
-      color: #333; 
-      padding: 16px 0;
-      margin: 4px;
-      font-size: 22px;
-      font-weight: bold;
-      border-radius: 12px;
-      border: 1px solid #bbb;
-      width: 22%;
-      height: 56px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-    }
-    .calc-display {
-      width: 100%;
-      padding: 16px;
-      margin: 8px 0;
-      text-align: left;
-      direction: ltr;
-      font-size: 22px;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-    .calc-apply {
-      background: #2e7d32 !important;
-      width: 100% !important;
-      padding: 18px !important;
-      margin-top: 14px;
-      font-size: 20px;
-      border-radius: 10px;
-    }
-    .report-card { background: #fff8e1; border-left: 4px solid #ffa000; }
-    .report-card h4 { color: #e65100; margin-bottom: 10px; }
-    .location-display {
-      width: 100%; padding: 12px; background: #f5f5f5; border-radius: 8px;
-      font-weight: bold; color: #2e7d32; text-align: center; border: 1px solid #ddd;
-    }
-    .status-message {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      padding: 12px 20px;
-      border-radius: 8px;
-      color: white;
-      font-weight: bold;
-      z-index: 10000;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      transition: opacity 0.3s;
-    }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h2>انبارگردانی سلطان</h2>
-    <div class="tabs" id="tabsContainer">
-      <button class="tab-btn active" data-tab="main">عملیات</button>
-      <button class="tab-btn" data-tab="reports">📊 گزارشات</button>
-      <button class="tab-btn" data-tab="settings">⚙️ تنظیمات</button>
-    </div>
-    <div class="tab-content active" id="tab-main">
-      <div id="scanButtonContainer" class="toolbar">
-        <button onclick="startScan()" class="scan">📸 اسکن بارکد</button>
-        <div>
-          <label>📍 محل:</label>
-          <div class="location-display" id="globalLocationDisplay">انبار مرکزی</div>
-        </div>
-      </div>
-      <input type="text" id="searchInput" placeholder="بارکد را وارد کنید" autofocus />
-      <button onclick="searchOrAdd()">🔍 جستجو / افزودن</button>
-    </div>
-    <div class="tab-content" id="tab-reports">
-      <h3>📊 گزارش مغایرت‌ها</h3>
-      <div class="report-card">
-        <h4>🔴 مغایرت‌های شمارش ۱ (غیرصفر)</h4>
-        <div id="discrepancy1List" style="max-height:200px; overflow-y:auto;">
-          <p style="text-align:center; color:#666;">در حال بارگذاری...</p>
-        </div>
-      </div>
-      <div class="report-card" style="margin-top:16px;">
-        <h4>🟠 مغایرت‌های شمارش ۲ (غیرصفر)</h4>
-        <div id="discrepancy2List" style="max-height:200px; overflow-y:auto;">
-          <p style="text-align:center; color:#666;">در حال بارگذاری...</p>
-        </div>
-      </div>
-      <button onclick="exportDiscrepancies()" style="width:100%; margin-top:16px; background:#d32f2f;">📤 خروجی مغایرت‌ها (اکسل)</button>
-    </div>
-    <div class="tab-content" id="tab-settings">
-      <h3>⚙️ تنظیمات سیستم</h3>
-      <label>👤 نام کاربر:</label>
-      <input type="text" id="settingUserName" placeholder="نام شما" />
-      <label>👥 نام تیم (پیش‌فرض):</label>
-      <input type="text" id="settingTeamName" placeholder="مثلاً: تیم الف" />
-      <label>📍 محل پیش‌فرض (نمایش در عملیات):</label>
-      <div class="custom-select-container">
-        <input type="text" id="settingDefaultLocation" placeholder="محل پیش‌فرض را وارد کنید" autocomplete="off" />
-        <div class="custom-select-dropdown hidden" id="settingsLocationDropdown"></div>
-        <span class="select-arrow" onclick="toggleLocationDropdown('settings')">▼</span>
-      </div>
-      <label>🔢 حداقل طول بارکد:</label>
-      <input type="number" id="settingMinLength" min="4" max="50" value="14" />
-      <label>🔢 حداکثر طول بارکد:</label>
-      <input type="number" id="settingMaxLength" min="4" max="50" value="20" />
-      <label class="secondary" style="margin-top:16px;">
-        <input type="checkbox" id="searchByTag" /> 
-        🔍 جستجو بر اساس تگ (به‌جای بارکد)
-      </label>
-      <p style="font-size:13px; color:#555; margin-top:4px;">
-        در این حالت، فیلد جستجو به «تگ» تغییر می‌کند و دکمه اسکن پنهان می‌شود.
-      </p>
-      <h4 style="margin:20px 0 8px;">🔄 تغییر روش اسکن</h4>
-      <button onclick="changeScanner()" class="secondary" style="width:100%;">🔄 تغییر اسکنر</button>
-      <p style="font-size:13px; margin-top:6px; color:#555;">
-        ✅ پیشنهاد: <strong>Gamma Scanner</strong> — سریع، بدون تبلیغ، <strong>Batch Scan</strong>، Zoom، Flash، Export CSV و قابلیت اسکن QR رمز وای‌فای (طبق وبسایت رسمی).
-      </p>
-      
-      <h4 style="margin:20px 0 8px;">🌐 اتصال به Google Sheets</h4>
-      <label>📄 Sheet ID:</label>
-      <input type="text" id="sheetId" placeholder="مثال: 1A2B3C4D5E6F..." />
-      <label>🔑 API Key:</label>
-      <input type="text" id="apiKey" placeholder="کلید API گوگل" />
-      <button onclick="testConnection()" class="secondary" style="width:100%; margin:8px 0;">🔗 تست اتصال</button>
-      <button onclick="loadFromSheets()" class="secondary" style="width:100%; margin:8px 0;">🔄 بارگذاری از Sheets</button>
-      <button onclick="saveToSheets()" class="secondary" style="width:100%; margin:8px 0;">💾 ذخیره در Sheets</button>
-      
-      <h4 style="margin:20px 0 8px;">🗃️ مدیریت داده</h4>
-      <input type="file" id="excelFile" accept=".xlsx,.xls" style="width:100%; margin:6px 0;" />
-      <button onclick="importExcel()" style="width:100%; margin:6px 0;">📥 import اکسل</button>
-      <button onclick="exportExcel()" style="width:100%; margin:6px 0; background:#1976d2;">📤 خروجی اکسل</button>
-      <button onclick="clearAll()" class="danger" style="width:100%; margin:6px 0;">🗑️ پاک کردن همه داده‌ها</button>
-      <button onclick="saveSettings()" style="margin-top:20px; width:100%;">✅ ذخیره تنظیمات</button>
-    </div>
-  </div>
-  
-  <div class="card" id="mainTableCard">
-    <h3>لیست کل داده‌ها (<span id="totalCount">0</span> مورد)</h3>
-    <input type="text" id="globalSearch" placeholder="🔍 جستجو در همه ستون‌ها..." oninput="applyFilters()" style="margin-bottom:12px;" />
-    <div class="table-container">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>بارکد</th>
-            <th>نام کالا</th>
-            <th>شمارش۱</th>
-            <th>مغایرت۱</th>
-            <th>شمارش۲</th>
-            <th>مغایرت۲</th>
-            <th>تگ</th>
-            <th>تیم</th>
-            <th>محل</th>
-            <th>موجودی</th>
-            <th>توضیحات</th>
-            <th>آخرین بروزرسانی</th>
-            <th>کاربر</th>
-            <th>عملیات</th>
-          </tr>
-          <tr id="filterRow"></tr>
-        </thead>
-        <tbody id="tableBody">
-          <tr><td colspan="14" style="text-align:center;">داده‌ای وجود ندارد.</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-  
-  <!-- مودال‌ها -->
-  <div id="cameraModal" class="modal hidden">
-    <div style="position:relative; width:100vw; height:100vh;">
-      <video id="cameraVideo" playsinline></video>
-      <div class="scanner-frame"></div>
-      <div class="scan-hint" id="scanHint">
-        🔍 بارکد را کاملاً در چهارچوب آبی قرار دهید.<br>
-        <span id="hintZoom">🔍 زوم: ×1.0</span>
-      </div>
-      <div class="zoom-controls">
-        <button class="zoom-btn" onclick="zoomOut()">–</button>
-        <button class="zoom-btn" onclick="resetZoom()">↺</button>
-        <button class="zoom-btn" onclick="zoomIn()">+</button>
-      </div>
-    </div>
-    <div style="padding:16px; text-align:center;">
-      <button onclick="stopCamera()" class="danger" style="width:auto; padding:12px 24px; font-size:16px;">⏹️ توقف اسکن</button>
-    </div>
-  </div>
-  
-  <div id="addModal" class="modal hidden">
-    <div class="modal-content">
-      <h3>افزودن کالای جدید</h3>
-      <label>بارکد:</label>
-      <input type="text" id="addBarcode" readonly />
-      <label>نام کالا:</label>
-      <input type="text" id="addName" />
-      <label>موجودی سیستمی:</label>
-      <input type="number" id="addStock" step="0.01" readonly />
-      <label>شمارش ۱:</label>
-      <input type="number" id="addCount1" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyAdd()" />
-      <div>مغایرت۱: <span id="addDisc1" class="discrepancy">—</span></div>
-      <label>شمارش ۲:</label>
-      <input type="number" id="addCount2" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyAdd()" />
-      <div>مغایرت۲: <span id="addDisc2" class="discrepancy">—</span></div>
-      <label>تگ:</label>
-      <input type="text" id="addTag" />
-      <label>تیم:</label>
-      <input type="text" id="addTeam" readonly />
-      <label>محل:</label>
-      <div class="custom-select-container">
-        <input type="text" id="addLocation" autocomplete="off" />
-        <div class="custom-select-dropdown hidden" id="addLocationDropdown"></div>
-        <span class="select-arrow" onclick="toggleLocationDropdown('add')">▼</span>
-      </div>
-      <label>توضیحات:</label>
-      <textarea id="addNotes" rows="2"></textarea>
-      <div style="display:flex; gap:8px; margin-top:16px;">
-        <button onclick="saveAdd()" style="flex:1;">✅ افزودن</button>
-        <button onclick="closeAddModal()" class="secondary" style="flex:1;">❌ لغو</button>
-      </div>
-    </div>
-  </div>
-  
-  <div id="editModal" class="modal hidden">
-    <div class="modal-content">
-      <h3>ویرایش کالا</h3>
-      <label>بارکد:</label>
-      <input type="text" id="editBarcode" readonly />
-      <label>نام کالا:</label>
-      <input type="text" id="editName" />
-      <label>موجودی سیستمی:</label>
-      <input type="number" id="editStock" step="0.01" readonly />
-      <label>شمارش ۱:</label>
-      <input type="number" id="editCount1" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyEdit()" />
-      <div>مغایرت۱: <span id="editDisc1" class="discrepancy">—</span></div>
-      <label>شمارش ۲:</label>
-      <input type="number" id="editCount2" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyEdit()" />
-      <div>مغایرت۲: <span id="editDisc2" class="discrepancy">—</span></div>
-      <label>تگ:</label>
-      <input type="text" id="editTag" />
-      <label>تیم:</label>
-      <input type="text" id="editTeam" readonly />
-      <label>محل:</label>
-      <div class="custom-select-container">
-        <input type="text" id="editLocation" autocomplete="off" />
-        <div class="custom-select-dropdown hidden" id="editLocationDropdown"></div>
-        <span class="select-arrow" onclick="toggleLocationDropdown('edit')">▼</span>
-      </div>
-      <label>توضیحات:</label>
-      <textarea id="editNotes" rows="2"></textarea>
-      <div style="display:flex; gap:8px; margin-top:16px;">
-        <button onclick="saveEdit()" style="flex:1;">💾 ذخیره</button>
-        <button onclick="closeEditModal()" class="secondary" style="flex:1;">❌ لغو</button>
-      </div>
-    </div>
-  </div>
-  
-  <div id="calcModal" class="modal hidden">
-    <div class="modal-content">
-      <h3>ماشین‌حساب</h3>
-      <input type="text" id="calcDisplay" class="calc-display" inputmode="numeric" pattern="[0-9+\-*/().]*" 
-             placeholder="12+5*(3-1)" />
-      <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:6px; margin-top:10px;">
-        <button class="calc-btn" onclick="calcAppend('7')">7</button>
-        <button class="calc-btn" onclick="calcAppend('8')">8</button>
-        <button class="calc-btn" onclick="calcAppend('9')">9</button>
-        <button class="calc-btn" onclick="calcAppend('/')">÷</button>
-        <button class="calc-btn" onclick="calcAppend('4')">4</button>
-        <button class="calc-btn" onclick="calcAppend('5')">5</button>
-        <button class="calc-btn" onclick="calcAppend('6')">6</button>
-        <button class="calc-btn" onclick="calcAppend('*')">×</button>
-        <button class="calc-btn" onclick="calcAppend('1')">1</button>
-        <button class="calc-btn" onclick="calcAppend('2')">2</button>
-        <button class="calc-btn" onclick="calcAppend('3')">3</button>
-        <button class="calc-btn" onclick="calcAppend('-')">−</button>
-        <button class="calc-btn" onclick="calcAppend('0')">0</button>
-        <button class="calc-btn" onclick="calcAppend('(')">(</button>
-        <button class="calc-btn" onclick="calcAppend(')')">)</button>
-        <button class="calc-btn" onclick="calcAppend('+')">+</button>
-        <button class="calc-btn" onclick="calcAppend('.')">.</button>
-        <button class="calc-btn" style="background:#ffc107;color:#000;" onclick="calcClear()">C</button>
-        <button class="calc-btn" style="background:#2196f3;color:white;" onclick="calcApply()">=</button>
-        <button class="calc-btn" onclick="calcBackspace()">⌫</button>
-      </div>
-      <button class="calc-btn calc-apply" onclick="calcApply()">✅ اعمال نتیجه</button>
-      <button class="secondary" style="width:100%; margin-top:10px; padding:14px; font-size:18px;" 
-              onclick="closeCalcModal()">❌ لغو</button>
-    </div>
-  </div>
-
-  <script>
+<script>
     // ============ تنظیمات اولیه ============
     let settings = JSON.parse(localStorage.getItem('appSettings')) || {
       userName: 'کاربر',
@@ -467,11 +7,10 @@
       minLength: 14,
       maxLength: 20,
       searchByTag: false,
-      sheetId: '',
-      apiKey: ''
+      scriptUrl: ''
     };
     
-    let items = [];
+    let items = JSON.parse(localStorage.getItem('items')) || [];
     let filters = {};
     let currentEditIndex = -1;
     let currentDropdown = null;
@@ -484,37 +23,122 @@
     let zoomLevel = 1.0;
     let CURRENT_CALC_TARGET = null;
     
-    // ============ توابع کمکی ============
+    // ============ توابع Google Apps Script ============
     
-    function showMessage(message, type = 'info') {
-      // حذف پیام قبلی
-      const oldMsg = document.getElementById('statusMessage');
-      if (oldMsg) oldMsg.remove();
+    // نمایش وضعیت
+    function showSyncStatus(message, type = 'info') {
+      const statusEl = document.getElementById('syncStatus');
+      statusEl.textContent = message;
+      statusEl.className = 'sync-status show';
+      if (type === 'success') statusEl.classList.add('success');
+      else if (type === 'error') statusEl.classList.add('error');
       
-      // ایجاد پیام جدید
-      const msgEl = document.createElement('div');
-      msgEl.id = 'statusMessage';
-      msgEl.className = 'status-message';
-      msgEl.textContent = message;
-      
-      // رنگ بر اساس نوع
-      const colors = {
-        info: '#1976d2',
-        success: '#2e7d32',
-        error: '#c62828',
-        warning: '#ff9800'
-      };
-      msgEl.style.backgroundColor = colors[type] || colors.info;
-      
-      // اضافه کردن به صفحه
-      document.body.appendChild(msgEl);
-      
-      // مخفی کردن خودکار بعد از 3 ثانیه
       setTimeout(() => {
-        msgEl.style.opacity = '0';
-        setTimeout(() => msgEl.remove(), 300);
+        statusEl.classList.remove('show');
       }, 3000);
     }
+    
+    // تست اتصال به اسکریپت
+    async function testScriptConnection() {
+      const scriptUrl = document.getElementById('scriptUrl').value.trim();
+      
+      if (!scriptUrl) {
+        alert('لطفاً URL اسکریپت را وارد کنید');
+        return;
+      }
+      
+      showSyncStatus('🔄 در حال تست اتصال...', 'info');
+      
+      try {
+        const response = await fetch(scriptUrl);
+        
+        if (response.ok) {
+          settings.scriptUrl = scriptUrl;
+          localStorage.setItem('appSettings', JSON.stringify(settings));
+          showSyncStatus('✅ اتصال موفق!', 'success');
+          alert('✅ اتصال برقرار شد!');
+        } else {
+          throw new Error(`خطای HTTP: ${response.status}`);
+        }
+      } catch (error) {
+        showSyncStatus('❌ اتصال ناموفق', 'error');
+        alert(`❌ خطا در اتصال:\n${error.message}`);
+      }
+    }
+    
+    // بارگذاری از Google Apps Script
+    async function loadFromGoogleAppsScript() {
+      if (!settings.scriptUrl) {
+        alert('لطفاً ابتدا URL اسکریپت را وارد و تست کنید');
+        return;
+      }
+      
+      showSyncStatus('🔄 در حال بارگذاری...', 'info');
+      
+      try {
+        const response = await fetch(settings.scriptUrl);
+        
+        if (!response.ok) {
+          throw new Error(`خطای HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+          items = data;
+          localStorage.setItem('items', JSON.stringify(items));
+          showSyncStatus(`✅ ${items.length} مورد بارگذاری شد`, 'success');
+          renderTable();
+          renderDiscrepancyReports();
+        } else {
+          showSyncStatus('📭 داده‌ای موجود نیست', 'info');
+        }
+      } catch (error) {
+        console.error('خطا در بارگذاری:', error);
+        showSyncStatus('❌ خطا در بارگذاری', 'error');
+      }
+    }
+    
+    // ذخیره در Google Apps Script
+    async function saveToGoogleAppsScript() {
+      if (!settings.scriptUrl) {
+        return {success: false, error: 'URL اسکریپت تنظیم نشده'};
+      }
+      
+      showSyncStatus('🔄 در حال ذخیره...', 'info');
+      
+      try {
+        const response = await fetch(settings.scriptUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: 'save',
+            items: items
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`خطای HTTP: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showSyncStatus(`✅ ${items.length} مورد ذخیره شد`, 'success');
+          return {success: true};
+        } else {
+          throw new Error(result.error || 'خطای ناشناخته');
+        }
+      } catch (error) {
+        console.error('خطا در ذخیره:', error);
+        showSyncStatus(`❌ خطا: ${error.message}`, 'error');
+        return {success: false, error: error.message};
+      }
+    }
+    
+    // ============ توابع اصلی برنامه ============
     
     function getNowFa() {
       return new Intl.DateTimeFormat('fa-IR', {
@@ -552,182 +176,7 @@
       document.getElementById('editDisc2').textContent = disc2;
     }
     
-    function parseFaDateTime(faStr) {
-      if (!faStr) return 0;
-      const parts = faStr.split(' ');
-      if (parts.length < 2) return Date.now();
-      const time = parts[1];
-      const [h, m, s] = time.split(':').map(x => parseInt(x) || 0);
-      const d = new Date();
-      d.setHours(h, m, s, 0);
-      return d.getTime();
-    }
-    
-    // ============ توابع Google Sheets ============
-    
-    async function loadFromSheets() {
-      const { sheetId, apiKey } = settings;
-      if (!sheetId || !apiKey) {
-        showMessage('❌ لطفاً Sheet ID و API Key را در تنظیمات وارد کنید', 'error');
-        return;
-      }
-      
-      showMessage('🔄 در حال بارگذاری از Google Sheets...', 'info');
-      
-      try {
-        const response = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1?key=${apiKey}`
-        );
-        
-        if (!response.ok) {
-          throw new Error(`خطای HTTP: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.values && data.values.length > 1) {
-          items = data.values.slice(1).map(row => {
-            // ایجاد آرایه با 13 خانه
-            const fullRow = new Array(13).fill('');
-            
-            // پر کردن خانه‌ها
-            for (let i = 0; i < Math.min(row.length, 13); i++) {
-              fullRow[i] = row[i] || '';
-            }
-            
-            // تبدیل اعداد
-            fullRow[2] = parseFloat(fullRow[2]) || 0;
-            fullRow[3] = parseFloat(fullRow[3]) || 0;
-            fullRow[4] = parseFloat(fullRow[4]) || 0;
-            fullRow[5] = parseFloat(fullRow[5]) || 0;
-            fullRow[9] = parseFloat(fullRow[9]) || 0;
-            
-            return fullRow;
-          });
-          
-          // ذخیره محلی برای fallback
-          localStorage.setItem('items', JSON.stringify(items));
-          
-          showMessage(`✅ ${items.length} مورد بارگذاری شد`, 'success');
-          renderTable();
-          renderDiscrepancyReports();
-        } else {
-          items = [];
-          showMessage('📭 صفحه گسترده خالی است', 'info');
-          renderTable();
-          renderDiscrepancyReports();
-        }
-        
-      } catch (error) {
-        console.error('خطا در بارگذاری:', error);
-        showMessage('❌ خطا در بارگذاری داده‌ها', 'error');
-        // بارگذاری از localStorage به عنوان fallback
-        const localItems = JSON.parse(localStorage.getItem('items')) || [];
-        if (localItems.length > 0) {
-          items = localItems;
-          showMessage(`📱 ${items.length} مورد از حافظه محلی بارگذاری شد`, 'info');
-          renderTable();
-          renderDiscrepancyReports();
-        }
-      }
-    }
-    
-    async function saveToSheets() {
-      const { sheetId, apiKey } = settings;
-      if (!sheetId || !apiKey) {
-        showMessage('❌ Sheet ID یا API Key تنظیم نشده', 'error');
-        return false;
-      }
-      
-      showMessage('🔄 در حال ذخیره در Google Sheets...', 'info');
-      
-      try {
-        // ایجاد هدرها و داده‌ها
-        const values = [
-          ['بارکد', 'نام کالا', 'شمارش۱', 'مغایرت۱', 'شمارش۲', 'مغایرت۲', 
-           'تگ', 'تیم', 'محل', 'موجودی', 'توضیحات', 'آخرین بروزرسانی', 'کاربر'],
-          ...items.map(item => item.slice(0, 13))
-        ];
-        
-        const response = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1?valueInputOption=USER_ENTERED&key=${apiKey}`,
-          {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              range: 'Sheet1',
-              majorDimension: 'ROWS',
-              values: values
-            })
-          }
-        );
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error?.message || `خطای HTTP: ${response.status}`);
-        }
-        
-        // ذخیره محلی همزمان
-        localStorage.setItem('items', JSON.stringify(items));
-        
-        showMessage(`✅ ${items.length} مورد ذخیره شد`, 'success');
-        return true;
-        
-      } catch (error) {
-        console.error('خطا در ذخیره:', error);
-        showMessage(`❌ خطا: ${error.message}`, 'error');
-        // ذخیره محلی به عنوان fallback
-        localStorage.setItem('items', JSON.stringify(items));
-        showMessage('📱 داده در حافظه محلی ذخیره شد', 'info');
-        return false;
-      }
-    }
-    
-    async function testConnection() {
-      const sheetId = document.getElementById('sheetId').value.trim();
-      const apiKey = document.getElementById('apiKey').value.trim();
-      
-      if (!sheetId) {
-        alert('لطفاً Sheet ID را وارد کنید');
-        return;
-      }
-      
-      if (!apiKey) {
-        alert('لطفاً API Key را وارد کنید');
-        return;
-      }
-      
-      showMessage('🔄 در حال تست اتصال...', 'info');
-      
-      try {
-        const response = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?fields=properties.title&key=${apiKey}`
-        );
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error?.message || `خطای HTTP: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        alert(`✅ اتصال موفق\n📄 نام Sheet: ${data.properties.title || 'Sheet'}`);
-        
-        // ذخیره تنظیمات
-        settings.sheetId = sheetId;
-        settings.apiKey = apiKey;
-        saveSettings();
-        
-        // بارگذاری داده‌ها
-        loadFromSheets();
-        
-      } catch (error) {
-        alert(`❌ خطا در اتصال:\n${error.message}\n\nراهنمایی:\n1. مطمئن شوید Sheet ID صحیح است\n2. API Key باید فعال باشد\n3. Sheets API باید در Google Cloud Console فعال شده باشد`);
-      }
-    }
-    
-    // ============ توابع مدیریت داده‌ها ============
+    // ============ توابع ذخیره‌سازی ============
     
     async function saveAdd() {
       const bc = document.getElementById('addBarcode').value.trim();
@@ -750,21 +199,38 @@
         settings.userName
       ];
       
-      items.push(newRow);
+      // ذخیره موقت در حافظه
+      const tempItems = [...items, newRow];
       
-      // ذخیره در Google Sheets
-      if (settings.sheetId && settings.apiKey) {
-        await saveToSheets();
+      // ذخیره در Google Sheets اگر تنظیم شده
+      if (settings.scriptUrl) {
+        const originalItems = [...items];
+        items = tempItems; // موقتاً برای ذخیره در Sheets
+        const saveResult = await saveToGoogleAppsScript();
+        
+        if (saveResult.success) {
+          // اگر ذخیره در Sheets موفق بود، در localStorage هم ذخیره کن
+          localStorage.setItem('items', JSON.stringify(items));
+          showSyncStatus('✅ داده ذخیره شد', 'success');
+          renderTable();
+          renderDiscrepancyReports();
+          closeAddModal();
+          document.getElementById('searchInput').value = '';
+        } else {
+          // اگر ذخیره در Sheets ناموفق بود، تغییرات را برگردان
+          items = originalItems;
+          showSyncStatus('❌ ذخیره ناموفق - تغییرات اعمال نشد', 'error');
+        }
       } else {
-        // فقط ذخیره محلی
+        // اگر اسکریپت تنظیم نشده، فقط در localStorage ذخیره کن
+        items = tempItems;
         localStorage.setItem('items', JSON.stringify(items));
-        showMessage('📱 داده در حافظه محلی ذخیره شد', 'info');
+        showSyncStatus('📱 داده در حافظه محلی ذخیره شد', 'info');
+        renderTable();
+        renderDiscrepancyReports();
+        closeAddModal();
+        document.getElementById('searchInput').value = '';
       }
-      
-      renderTable();
-      renderDiscrepancyReports();
-      closeAddModal();
-      document.getElementById('searchInput').value = '';
     }
     
     async function saveEdit() {
@@ -775,7 +241,7 @@
       const c2Raw = document.getElementById('editCount2').value;
       const c2 = c2Raw !== '' ? parseFloat(c2Raw) || 0 : 0;
       
-      items[currentEditIndex] = [
+      const updatedRow = [
         document.getElementById('editBarcode').value.trim(),
         document.getElementById('editName').value.trim(),
         c1,
@@ -791,106 +257,96 @@
         settings.userName
       ];
       
-      // ذخیره در Google Sheets
-      if (settings.sheetId && settings.apiKey) {
-        await saveToSheets();
-      } else {
-        // فقط ذخیره محلی
-        localStorage.setItem('items', JSON.stringify(items));
-        showMessage('📱 داده در حافظه محلی ذخیره شد', 'info');
-      }
+      // ذخیره موقت در حافظه
+      const tempItems = [...items];
+      tempItems[currentEditIndex] = updatedRow;
       
-      renderTable();
-      renderDiscrepancyReports();
-      closeEditModal();
-      document.getElementById('searchInput').value = '';
+      // ذخیره در Google Sheets اگر تنظیم شده
+      if (settings.scriptUrl) {
+        const originalItems = [...items];
+        items = tempItems; // موقتاً برای ذخیره در Sheets
+        const saveResult = await saveToGoogleAppsScript();
+        
+        if (saveResult.success) {
+          // اگر ذخیره در Sheets موفق بود، در localStorage هم ذخیره کن
+          localStorage.setItem('items', JSON.stringify(items));
+          showSyncStatus('✅ داده ذخیره شد', 'success');
+          renderTable();
+          renderDiscrepancyReports();
+          closeEditModal();
+          document.getElementById('searchInput').value = '';
+        } else {
+          // اگر ذخیره در Sheets ناموفق بود، تغییرات را برگردان
+          items = originalItems;
+          showSyncStatus('❌ ذخیره ناموفق - تغییرات اعمال نشد', 'error');
+        }
+      } else {
+        // اگر اسکریپت تنظیم نشده، فقط در localStorage ذخیره کن
+        items = tempItems;
+        localStorage.setItem('items', JSON.stringify(items));
+        showSyncStatus('📱 داده در حافظه محلی ذخیره شد', 'info');
+        renderTable();
+        renderDiscrepancyReports();
+        closeEditModal();
+        document.getElementById('searchInput').value = '';
+      }
     }
     
     async function removeItem(i) {
       if (!confirm('این ردیف حذف شود؟')) return;
       
-      items.splice(i, 1);
+      // ذخیره موقت در حافظه
+      const tempItems = [...items];
+      tempItems.splice(i, 1);
       
-      // ذخیره در Google Sheets
-      if (settings.sheetId && settings.apiKey) {
-        await saveToSheets();
-      } else {
-        // فقط ذخیره محلی
-        localStorage.setItem('items', JSON.stringify(items));
-        showMessage('📱 داده از حافظه محلی حذف شد', 'info');
-      }
-      
-      renderTable();
-      renderDiscrepancyReports();
-    }
-    
-    function searchOrAdd() {
-      const query = document.getElementById('searchInput').value.trim();
-      const loc = settings.defaultLocation;
-      if (!query) return alert('لطفاً مقدار را وارد کنید.');
-      
-      if (settings.searchByTag) {
-        const idx = items.findIndex(r => r[6] === query && r[8] === loc);
-        if (idx !== -1) {
-          openEditModal(idx);
+      // ذخیره در Google Sheets اگر تنظیم شده
+      if (settings.scriptUrl) {
+        const originalItems = [...items];
+        items = tempItems; // موقتاً برای ذخیره در Sheets
+        const saveResult = await saveToGoogleAppsScript();
+        
+        if (saveResult.success) {
+          // اگر ذخیره در Sheets موفق بود، در localStorage هم ذخیره کن
+          localStorage.setItem('items', JSON.stringify(items));
+          showSyncStatus('✅ داده حذف شد', 'success');
+          renderTable();
+          renderDiscrepancyReports();
         } else {
-          alert('⚠️ در حالت «جستجو بر اساس تگ»، افزودن کالای جدید غیرفعال است. کالایی با این تگ یافت نشد.');
-          return;
+          // اگر ذخیره در Sheets ناموفق بود، تغییرات را برگردان
+          items = originalItems;
+          showSyncStatus('❌ حذف ناموفق - تغییرات اعمال نشد', 'error');
         }
       } else {
-        if (query.length < settings.minLength || query.length > settings.maxLength) {
-          alert(`❌ طول بارکد (${query.length}) خارج از محدوده (${settings.minLength}–${settings.maxLength}) است.`);
-          return;
-        }
-        const idx = items.findIndex(r => r[0] === query && r[8] === loc);
-        if (idx !== -1) openEditModal(idx);
-        else openAddModal(query, loc);
+        // اگر اسکریپت تنظیم نشده، فقط در localStorage ذخیره کن
+        items = tempItems;
+        localStorage.setItem('items', JSON.stringify(items));
+        showSyncStatus('📱 داده از حافظه محلی حذف شد', 'info');
+        renderTable();
+        renderDiscrepancyReports();
       }
-    }
-    
-    function openAddModal(bc, loc, tag = '') {
-      const existing = items.find(r => r[0] === bc);
-      const stock = existing ? parseFloat(existing[9]) || 0 : 0;
-      document.getElementById('addBarcode').value = bc;
-      document.getElementById('addLocation').value = loc;
-      document.getElementById('addStock').value = stock;
-      document.getElementById('addCount1').value = stock;
-      document.getElementById('addCount2').value = '';
-      document.getElementById('addTag').value = tag;
-      document.getElementById('addTeam').value = settings.teamName;
-      document.getElementById('addNotes').value = '';
-      updateDiscrepancyAdd();
-      document.getElementById('addModal').classList.remove('hidden');
-    }
-    
-    function openEditModal(idx) {
-      currentEditIndex = idx;
-      const r = items[idx];
-      document.getElementById('editBarcode').value = r[0];
-      document.getElementById('editName').value = r[1] || '';
-      document.getElementById('editStock').value = r[9] || 0;
-      document.getElementById('editCount1').value = r[2] || '';
-      document.getElementById('editCount2').value = r[4] != null ? r[4] : '';
-      document.getElementById('editTag').value = r[6] || '';
-      document.getElementById('editTeam').value = settings.teamName;
-      document.getElementById('editLocation').value = r[8] || '';
-      document.getElementById('editNotes').value = r[10] || '';
-      updateDiscrepancyEdit();
-      document.getElementById('editModal').classList.remove('hidden');
-    }
-    
-    function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
-    function closeEditModal() { 
-      document.getElementById('editModal').classList.add('hidden');
-      currentEditIndex = -1; 
     }
     
     // ============ توابع نمایش ============
     
     function renderTable() {
       document.getElementById('totalCount').textContent = items.length;
-      items.sort((a, b) => parseFaDateTime(b[11]) - parseFaDateTime(a[11]));
+      items.sort((a, b) => {
+        const dateA = a[11] ? parseFaDateTime(a[11]) : 0;
+        const dateB = b[11] ? parseFaDateTime(b[11]) : 0;
+        return dateB - dateA;
+      });
       applyFilters();
+    }
+    
+    function parseFaDateTime(faStr) {
+      if (!faStr) return 0;
+      const parts = faStr.split(' ');
+      if (parts.length < 2) return Date.now();
+      const time = parts[1];
+      const [h, m, s] = time.split(':').map(x => parseInt(x) || 0);
+      const d = new Date();
+      d.setHours(h, m, s, 0);
+      return d.getTime();
     }
     
     function applyFilters() {
@@ -1018,7 +474,7 @@
           
           if (json.length < 2) return alert('فایل خالی است.');
           
-          items = [];
+          const importedItems = [];
           for (let i = 1; i < json.length; i++) {
             const row = json[i];
             const bc = String(row[0] || '').trim();
@@ -1030,7 +486,7 @@
             const disc1 = (c1 - stock).toFixed(2);
             const disc2 = (c2 - stock).toFixed(2);
             
-            items.push([
+            importedItems.push([
               bc,
               row[1] || '',
               c1,
@@ -1047,17 +503,34 @@
             ]);
           }
           
-          // ذخیره در Google Sheets
-          if (settings.sheetId && settings.apiKey) {
-            await saveToSheets();
+          // ذخیره در Google Sheets اگر تنظیم شده
+          if (settings.scriptUrl) {
+            const originalItems = [...items];
+            items = importedItems; // موقتاً برای ذخیره در Sheets
+            const saveResult = await saveToGoogleAppsScript();
+            
+            if (saveResult.success) {
+              // اگر ذخیره در Sheets موفق بود، در localStorage هم ذخیره کن
+              localStorage.setItem('items', JSON.stringify(items));
+              showSyncStatus(`✅ ${items.length} مورد import شد`, 'success');
+              renderTable();
+              renderDiscrepancyReports();
+              alert(`✅ ${items.length} مورد import شد.`);
+            } else {
+              // اگر ذخیره در Sheets ناموفق بود، تغییرات را برگردان
+              items = originalItems;
+              showSyncStatus('❌ import ناموفق', 'error');
+              alert('❌ import ناموفق بود. داده‌ها تغییر نکردند.');
+            }
           } else {
-            // فقط ذخیره محلی
+            // اگر اسکریپت تنظیم نشده، فقط در localStorage ذخیره کن
+            items = importedItems;
             localStorage.setItem('items', JSON.stringify(items));
+            showSyncStatus(`📱 ${items.length} مورد در حافظه محلی import شد`, 'info');
+            renderTable();
+            renderDiscrepancyReports();
+            alert(`✅ ${items.length} مورد import شد.`);
           }
-          
-          renderTable();
-          renderDiscrepancyReports();
-          alert(`✅ ${items.length} مورد import شد.`);
           
         } catch (err) {
           alert('خطا در import: ' + (err.message || 'نامشخص'));
@@ -1068,21 +541,174 @@
     
     async function clearAll() {
       if (confirm('⚠️ تمام داده‌ها برای همیشه پاک شوند؟')) {
-        items = [];
-        
-        // پاک کردن از Google Sheets
-        if (settings.sheetId && settings.apiKey) {
-          await saveToSheets();
+        // ذخیره در Google Sheets اگر تنظیم شده
+        if (settings.scriptUrl) {
+          const originalItems = [...items];
+          items = []; // موقتاً برای ذخیره در Sheets
+          const saveResult = await saveToGoogleAppsScript();
+          
+          if (saveResult.success) {
+            // اگر ذخیره در Sheets موفق بود، در localStorage هم پاک کن
+            localStorage.removeItem('items');
+            showSyncStatus('✅ تمام داده‌ها پاک شدند', 'success');
+            renderTable();
+            renderDiscrepancyReports();
+            alert('✅ تمام داده‌ها پاک شدند.');
+          } else {
+            // اگر ذخیره در Sheets ناموفق بود، تغییرات را برگردان
+            items = originalItems;
+            showSyncStatus('❌ پاک کردن ناموفق', 'error');
+            alert('❌ پاک کردن ناموفق بود. داده‌ها تغییر نکردند.');
+          }
+        } else {
+          // اگر اسکریپت تنظیم نشده، فقط از localStorage پاک کن
+          items = [];
+          localStorage.removeItem('items');
+          showSyncStatus('📱 داده‌ها از حافظه محلی پاک شدند', 'info');
+          renderTable();
+          renderDiscrepancyReports();
+          alert('✅ تمام داده‌ها پاک شدند.');
         }
-        
-        // پاک کردن از localStorage
-        localStorage.removeItem('items');
-        
-        renderTable();
-        renderDiscrepancyReports();
-        alert('✅ تمام داده‌ها پاک شدند.');
       }
     }
+    
+    // ============ توابع UI ============
+    
+    function searchOrAdd() {
+      const query = document.getElementById('searchInput').value.trim();
+      const loc = settings.defaultLocation;
+      if (!query) return alert('لطفاً مقدار را وارد کنید.');
+      
+      if (settings.searchByTag) {
+        const idx = items.findIndex(r => r[6] === query && r[8] === loc);
+        if (idx !== -1) {
+          openEditModal(idx);
+        } else {
+          alert('⚠️ در حالت «جستجو بر اساس تگ»، افزودن کالای جدید غیرفعال است. کالایی با این تگ یافت نشد.');
+          return;
+        }
+      } else {
+        if (query.length < settings.minLength || query.length > settings.maxLength) {
+          alert(`❌ طول بارکد (${query.length}) خارج از محدوده (${settings.minLength}–${settings.maxLength}) است.`);
+          return;
+        }
+        const idx = items.findIndex(r => r[0] === query && r[8] === loc);
+        if (idx !== -1) openEditModal(idx);
+        else openAddModal(query, loc);
+      }
+    }
+    
+    function openAddModal(bc, loc, tag = '') {
+      const existing = items.find(r => r[0] === bc);
+      const stock = existing ? parseFloat(existing[9]) || 0 : 0;
+      document.getElementById('addBarcode').value = bc;
+      document.getElementById('addLocation').value = loc;
+      document.getElementById('addStock').value = stock;
+      document.getElementById('addCount1').value = stock;
+      document.getElementById('addCount2').value = '';
+      document.getElementById('addTag').value = tag;
+      document.getElementById('addTeam').value = settings.teamName;
+      document.getElementById('addNotes').value = '';
+      updateDiscrepancyAdd();
+      document.getElementById('addModal').classList.remove('hidden');
+    }
+    
+    function openEditModal(idx) {
+      currentEditIndex = idx;
+      const r = items[idx];
+      document.getElementById('editBarcode').value = r[0];
+      document.getElementById('editName').value = r[1] || '';
+      document.getElementById('editStock').value = r[9] || 0;
+      document.getElementById('editCount1').value = r[2] || '';
+      document.getElementById('editCount2').value = r[4] != null ? r[4] : '';
+      document.getElementById('editTag').value = r[6] || '';
+      document.getElementById('editTeam').value = settings.teamName;
+      document.getElementById('editLocation').value = r[8] || '';
+      document.getElementById('editNotes').value = r[10] || '';
+      updateDiscrepancyEdit();
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+    
+    function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
+    function closeEditModal() { 
+      document.getElementById('editModal').classList.add('hidden');
+      currentEditIndex = -1; 
+    }
+    
+    // ============ بارگذاری اولیه ============
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      // بارگذاری تنظیمات
+      document.getElementById('settingUserName').value = settings.userName;
+      document.getElementById('settingTeamName').value = settings.teamName;
+      document.getElementById('settingDefaultLocation').value = settings.defaultLocation;
+      document.getElementById('settingMinLength').value = settings.minLength;
+      document.getElementById('settingMaxLength').value = settings.maxLength;
+      document.getElementById('searchByTag').checked = settings.searchByTag;
+      document.getElementById('scriptUrl').value = settings.scriptUrl || '';
+      
+      document.getElementById('globalLocationDisplay').textContent = settings.defaultLocation;
+      
+      // تنظیم تب‌ها
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+          if (btn.dataset.tab === 'reports') renderDiscrepancyReports();
+        });
+      });
+      
+      // آپدیت UI جستجو
+      document.getElementById('searchByTag').addEventListener('change', function() {
+        settings.searchByTag = this.checked;
+        updateSearchUI();
+      });
+      updateSearchUI();
+      
+      // بارگذاری داده‌ها
+      if (items.length > 0) {
+        renderTable();
+        renderDiscrepancyReports();
+      }
+      
+      // اگر تنظیمات اسکریپت وجود دارد، از آنجا بارگذاری کن
+      if (settings.scriptUrl) {
+        setTimeout(() => loadFromGoogleAppsScript(), 1000);
+      }
+      
+      // اضافه کردن ماشین حساب به فیلدها
+      ['addCount1','addCount2','editCount1','editCount2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          const wrap = document.createElement('div');
+          wrap.style.position = 'relative';
+          el.parentNode.insertBefore(wrap, el);
+          wrap.appendChild(el);
+          const btn = document.createElement('button');
+          btn.innerHTML = '🧮';
+          btn.style.cssText = 
+            'position:absolute;left:12px;top:50%;transform:translateY(-50%);' +
+            'background:#e0e0e0;border:none;width:40px;height:40px;' +
+            'border-radius:10px;cursor:pointer;font-size:20px;font-weight:bold;';
+          btn.onclick = () => openCalc(id);
+          wrap.appendChild(btn);
+          el.style.paddingLeft = '60px';
+        }
+      });
+      
+      // بررسی پارامترهای URL
+      const params = new URLSearchParams(window.location.search);
+      const bc = params.get('SCAN_RESULT')?.trim() || params.get('barcode')?.trim();
+      if (bc && !settings.searchByTag) {
+        document.getElementById('searchInput').value = bc;
+        setTimeout(searchOrAdd, 150);
+      }
+      
+      // رندر اولیه
+      renderFilterRow();
+    });
     
     function saveSettings() {
       const user = document.getElementById('settingUserName').value.trim() || 'کاربر';
@@ -1092,8 +718,7 @@
       const min = parseInt(document.getElementById('settingMinLength').value) || 14;
       const max = parseInt(document.getElementById('settingMaxLength').value) || 20;
       const searchByTag = document.getElementById('searchByTag').checked;
-      const sheetId = document.getElementById('sheetId').value.trim();
-      const apiKey = document.getElementById('apiKey').value.trim();
+      const scriptUrl = document.getElementById('scriptUrl').value.trim();
       
       if (min > max) return alert('⚠️ حداقل نباید بیشتر از حداکثر باشد.');
       
@@ -1104,8 +729,7 @@
         minLength: min, 
         maxLength: max, 
         searchByTag,
-        sheetId,
-        apiKey
+        scriptUrl
       };
       
       localStorage.setItem('appSettings', JSON.stringify(settings));
@@ -1113,8 +737,6 @@
       updateSearchUI();
       alert('✅ تنظیمات ذخیره شد.');
     }
-    
-    // ============ توابع UI ============
     
     function updateSearchUI() {
       const searchByTag = settings.searchByTag;
@@ -1128,8 +750,6 @@
         scanContainer.style.display = 'flex';
       }
     }
-    
-    // ============ توابع ماشین حساب ============
     
     function openCalc(id) { 
       CURRENT_CALC_TARGET = id; 
@@ -1158,8 +778,7 @@
       CURRENT_CALC_TARGET = null; 
     }
     
-    // ============ توابع موقعیت ============
-    
+    // توابع موقعیت
     function getLocations() {
       const set = new Set();
       items.forEach(r => { const loc = (r[8] || '').trim(); if (loc) set.add(loc); });
@@ -1221,8 +840,7 @@
       hideAllDropdowns();
     }
     
-    // ============ توابع اسکنر ============
-    
+    // توابع اسکنر
     const SCANNERS = [
       { id: 'camera', name: '📸 اسکن با دوربین داخلی' },
       { id: 'gamma', name: 'Gamma Barcode Scanner',
@@ -1360,85 +978,7 @@
       stableScanCount = 0;
     }
     
-    // ============ بارگذاری اولیه ============
-    
-    document.addEventListener('DOMContentLoaded', () => {
-      // بارگذاری تنظیمات
-      document.getElementById('settingUserName').value = settings.userName;
-      document.getElementById('settingTeamName').value = settings.teamName;
-      document.getElementById('settingDefaultLocation').value = settings.defaultLocation;
-      document.getElementById('settingMinLength').value = settings.minLength;
-      document.getElementById('settingMaxLength').value = settings.maxLength;
-      document.getElementById('searchByTag').checked = settings.searchByTag;
-      document.getElementById('sheetId').value = settings.sheetId || '';
-      document.getElementById('apiKey').value = settings.apiKey || '';
-      
-      document.getElementById('globalLocationDisplay').textContent = settings.defaultLocation;
-      
-      // تنظیم تب‌ها
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-          btn.classList.add('active');
-          document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-          if (btn.dataset.tab === 'reports') renderDiscrepancyReports();
-        });
-      });
-      
-      // آپدیت UI جستجو
-      document.getElementById('searchByTag').addEventListener('change', function() {
-        settings.searchByTag = this.checked;
-        updateSearchUI();
-      });
-      updateSearchUI();
-      
-      // بارگذاری داده‌ها از localStorage اول
-      const localItems = JSON.parse(localStorage.getItem('items')) || [];
-      if (localItems.length > 0) {
-        items = localItems;
-        renderTable();
-        renderDiscrepancyReports();
-      }
-      
-      // سپس بارگذاری از Google Sheets اگر تنظیمات موجود باشد
-      if (settings.sheetId && settings.apiKey) {
-        setTimeout(() => loadFromSheets(), 1000);
-      }
-      
-      // اضافه کردن ماشین حساب به فیلدها
-      ['addCount1','addCount2','editCount1','editCount2'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-          const wrap = document.createElement('div');
-          wrap.style.position = 'relative';
-          el.parentNode.insertBefore(wrap, el);
-          wrap.appendChild(el);
-          const btn = document.createElement('button');
-          btn.innerHTML = '🧮';
-          btn.style.cssText = 
-            'position:absolute;left:12px;top:50%;transform:translateY(-50%);' +
-            'background:#e0e0e0;border:none;width:40px;height:40px;' +
-            'border-radius:10px;cursor:pointer;font-size:20px;font-weight:bold;';
-          btn.onclick = () => openCalc(id);
-          wrap.appendChild(btn);
-          el.style.paddingLeft = '60px';
-        }
-      });
-      
-      // بررسی پارامترهای URL
-      const params = new URLSearchParams(window.location.search);
-      const bc = params.get('SCAN_RESULT')?.trim() || params.get('barcode')?.trim();
-      if (bc && !settings.searchByTag) {
-        document.getElementById('searchInput').value = bc;
-        setTimeout(searchOrAdd, 150);
-      }
-      
-      // رندر اولیه
-      renderFilterRow();
-    });
-    
-    console.log('✅ برنامه انبارگردانی با Google Sheets آماده است');
+    console.log('✅ برنامه انبارگردانی با Google Apps Script آماده است');
   </script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
