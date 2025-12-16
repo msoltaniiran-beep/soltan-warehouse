@@ -449,6 +449,7 @@
     let lastScannedValue = '';
     let stableScanCount = 0;
     let zoomLevel = 1.0;
+
     document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -459,6 +460,7 @@
           if (btn.dataset.tab === 'reports') renderDiscrepancyReports();
         });
       });
+
       if (!settings.defaultLocation) {
         settings.defaultLocation = 'انبار مرکزی';
         localStorage.setItem('appSettings', JSON.stringify(settings));
@@ -469,15 +471,18 @@
       document.getElementById('settingMinLength').value = settings.minLength;
       document.getElementById('settingMaxLength').value = settings.maxLength;
       document.getElementById('searchByTag').checked = settings.searchByTag;
+
       document.getElementById('searchByTag').addEventListener('change', function() {
         settings.searchByTag = this.checked;
         updateSearchUI();
       });
+
       document.getElementById('globalLocationDisplay').textContent = settings.defaultLocation;
       updateSearchUI();
       renderTable();
       renderFilterRow();
       renderDiscrepancyReports();
+
       ['addCount1','addCount2','editCount1','editCount2'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -496,6 +501,7 @@
           el.style.paddingLeft = '60px';
         }
       });
+
       const params = new URLSearchParams(window.location.search);
       const bc = params.get('SCAN_RESULT')?.trim() || params.get('barcode')?.trim();
       if (bc && !settings.searchByTag) {
@@ -503,6 +509,7 @@
         setTimeout(searchOrAdd, 150);
       }
     });
+
     function updateSearchUI() {
       const searchByTag = settings.searchByTag;
       const input = document.getElementById('searchInput');
@@ -515,6 +522,7 @@
         scanContainer.style.display = 'flex';
       }
     }
+
     function renderDiscrepancyReports() {
       const disc1List = document.getElementById('discrepancy1List');
       const disc2List = document.getElementById('discrepancy2List');
@@ -528,6 +536,7 @@
         bcLocCount[bcLoc] = (bcLocCount[bcLoc] || 0) + 1;
         tagLocCount[tagLoc] = (tagLocCount[tagLoc] || 0) + 1;
       });
+
       function buildDiscrepancyTable(data) {
         if (data.length === 0) return '<p style="text-align:center; color:#666;">موردی یافت نشد.</p>';
         return `
@@ -556,6 +565,7 @@
       disc1List.innerHTML = buildDiscrepancyTable(disc1Items);
       disc2List.innerHTML = buildDiscrepancyTable(disc2Items);
     }
+
     function exportDiscrepancies() {
       const disc1 = items.filter(r => Math.abs(parseFloat(r[3])) > 0.001);
       const disc2 = items.filter(r => Math.abs(parseFloat(r[5])) > 0.001);
@@ -573,6 +583,7 @@
       XLSX.utils.book_append_sheet(wb, ws, 'مغایرت‌ها');
       XLSX.writeFile(wb, 'مغایرت‌های_انبارگردانی.xlsx');
     }
+
     function saveSettings() {
       const user = document.getElementById('settingUserName').value.trim() || 'کاربر';
       const team = document.getElementById('settingTeamName').value.trim();
@@ -588,11 +599,13 @@
       updateSearchUI();
       alert('✅ تنظیمات ذخیره شد.');
     }
+
     function renderTable() {
       document.getElementById('totalCount').textContent = items.length;
       items.sort((a, b) => parseFaDateTime(b[11]) - parseFaDateTime(a[11]));
       applyFilters();
     }
+
     function parseFaDateTime(faStr) {
       if (!faStr) return 0;
       const parts = faStr.split(' ');
@@ -603,6 +616,7 @@
       d.setHours(h, m, s, 0);
       return d.getTime();
     }
+
     async function applyZoom(level) {
       zoomLevel = Math.max(1.0, Math.min(3.0, level));
       document.getElementById('hintZoom').textContent = `🔍 زوم: ×${zoomLevel.toFixed(1)}`;
@@ -615,6 +629,7 @@
     function zoomIn() { applyZoom(zoomLevel + 0.3); }
     function zoomOut() { applyZoom(zoomLevel - 0.3); }
     function resetZoom() { applyZoom(1.0); }
+
     const SCANNERS = [
       { id: 'camera', name: '📸 اسکن با دوربین داخلی' },
       { id: 'gamma', name: 'Gamma Barcode Scanner',
@@ -624,13 +639,11 @@
       { id: 'easy', name: 'Easy Barcode Scanner',
         intent: 'intent://scan/#Intent;scheme=scan;package=com.tecace.easybarcodescanner;end;' }
     ];
+
     function changeScanner() {
-      let msg = 'روش اسکن را انتخاب کنید:
-';
-      SCANNERS.forEach((s, i) => msg += `${i+1}. ${s.name}
-`);
-      msg += '
-شماره را وارد کنید (پیش‌فرض: 1):';
+      let msg = 'روش اسکن را انتخاب کنید:\n';
+      SCANNERS.forEach((s, i) => msg += `${i+1}. ${s.name}\n`);
+      msg += '\nشماره را وارد کنید (پیش‌فرض: 1):';
       const choice = prompt(msg, '1');
       const idx = Math.max(0, parseInt(choice) - 1);
       const sel = SCANNERS[idx] || SCANNERS[0];
@@ -638,6 +651,7 @@
       localStorage.setItem('scanner', sel.id);
       alert(`✅ اسکنر: ${sel.name}`);
     }
+
     function launchExternalScanner(id) {
       const s = SCANNERS.find(x => x.id === id);
       if (s && s.intent) {
@@ -645,6 +659,7 @@
         if (!w) alert(`❌ «${s.name}» نصب نیست. از اسکن داخلی استفاده کنید.`);
       }
     }
+
     function startScan() {
       if (settings.searchByTag) {
         alert('⚠️ در حالت جستجو بر اساس تگ، اسکن بارکد غیرفعال است.');
@@ -656,6 +671,7 @@
         launchExternalScanner(LAST_SCAN_METHOD);
       }
     }
+
     async function startCameraScan() {
       if (!("BarcodeDetector" in window)) {
         alert("❌ مرورگر از اسکن پشتیبانی نمی‌کند. از Chrome استفاده کنید.");
@@ -686,26 +702,31 @@
               stableScanCount = 0;
               return;
             }
+
             const vw = video.videoWidth;
             const vh = video.videoHeight;
             const box = b.boundingBox || {};
             const x = box.x || 0, y = box.y || 0, w = box.width || 0, h = box.height || 0;
+
             // ✅ شرایط دقیق‌تر اسکن:
             const centerX = x + w/2;
             const centerY = y + h/2;
             const inVerticalZone = centerY > vh * 0.3 && centerY < vh * 0.7; // فقط نوار عمودی مرکزی
             const inHorizontalZone = Math.abs(centerX - vw/2) < vw * 0.2;  // ±20% افقی
             const minWidth = vw * 0.2;
+
             if (!inVerticalZone || !inHorizontalZone || w < minWidth) {
               stableScanCount = 0;
               return;
             }
+
             if (value === lastScannedValue) {
               stableScanCount++;
             } else {
               lastScannedValue = value;
               stableScanCount = 1;
             }
+
             if (stableScanCount >= 2) { // ≥2 فریم پشت‌سرهم
               clearInterval(scanInterval);
               scanInterval = null;
@@ -719,6 +740,7 @@
         alert("❌ دسترسی به دوربین رد شد.");
       }
     }
+
     function stopCamera() {
       const modal = document.getElementById('cameraModal');
       modal.classList.add('hidden');
@@ -732,6 +754,7 @@
       lastScannedValue = '';
       stableScanCount = 0;
     }
+
     function loadExcel() {
       const file = document.getElementById('excelFile').files[0];
       if (!file) return alert('فایلی انتخاب نشده است.');
@@ -755,13 +778,8 @@
             const disc2 = (c2 - stock).toFixed(2);
             items.push([
               bc, row[1] || '', c1, disc1, c2, disc2,
-              row[6] || '',
-              row[7] || '',          // ✅ تیم فقط از اکسل
-              row[8] || settings.defaultLocation || '',  // محل بدون تغییر
-              stock,
-              row[10] || '',
-              getNowFa(),
-              row[12] || ''          // ✅ کاربر فقط از اکسل
+              row[6] || '', row[7] || settings.teamName || '', row[8] || settings.defaultLocation || '', stock,
+              row[10] || '', getNowFa(), settings.userName
             ]);
           }
           localStorage.setItem('items', JSON.stringify(items));
@@ -774,6 +792,7 @@
       };
       reader.readAsArrayBuffer(file);
     }
+
     function exportExcel() {
       if (items.length === 0) return alert('داده‌ای برای خروجی وجود ندارد.');
       const headers = ['بارکد','نام کالا','شمارش۱','مغایرت۱','شمارش۲','مغایرت۲','تگ','تیم','محل','موجودی','توضیحات','آخرین بروزرسانی','کاربر'];
@@ -783,6 +802,7 @@
       XLSX.utils.book_append_sheet(wb, ws, 'انبار');
       XLSX.writeFile(wb, 'انبارگردانی_خروجی.xlsx');
     }
+
     function clearAll() {
       if (confirm('⚠️ تمام داده‌ها برای همیشه پاک شوند؟')) {
         items = [];
@@ -791,11 +811,13 @@
         renderDiscrepancyReports();
       }
     }
+
     // ✅ تغییر اصلی: جلوگیری از افزودن در حالت searchByTag
     function searchOrAdd() {
       const query = document.getElementById('searchInput').value.trim();
       const loc = settings.defaultLocation;
       if (!query) return alert('لطفاً مقدار را وارد کنید.');
+      
       if (settings.searchByTag) {
         const idx = items.findIndex(r => r[6] === query && r[8] === loc);
         if (idx !== -1) {
@@ -815,6 +837,7 @@
         else openAddModal(query, loc);
       }
     }
+
     function openAddModal(bc, loc, tag = '') {
       const existing = items.find(r => r[0] === bc);
       const stock = existing ? parseFloat(existing[9]) || 0 : 0;
@@ -829,6 +852,7 @@
       updateDiscrepancyAdd();
       document.getElementById('addModal').classList.remove('hidden');
     }
+
     function saveAdd() {
       const bc = document.getElementById('addBarcode').value.trim();
       const name = document.getElementById('addName').value.trim();
@@ -855,6 +879,7 @@
       closeAddModal();
       document.getElementById('searchInput').value = '';
     }
+
     function openEditModal(idx) {
       currentEditIndex = idx;
       const r = items[idx];
@@ -870,6 +895,7 @@
       updateDiscrepancyEdit();
       document.getElementById('editModal').classList.remove('hidden');
     }
+
     function saveEdit() {
       if (currentEditIndex < 0) return;
       const r = [...items[currentEditIndex]];
@@ -896,16 +922,19 @@
       closeEditModal();
       document.getElementById('searchInput').value = '';
     }
+
     function getNowFa() {
       return new Intl.DateTimeFormat('fa-IR', {
         year: 'numeric', month: '2-digit', day: '2-digit',
         hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
       }).format(new Date()).replace(/،/g, ' ');
     }
+
     // ✅ فیلتر جداگانه در هر ستون
     function applyFilters() {
       const global = document.getElementById('globalSearch').value.toLowerCase();
       const colFilters = Array.from(document.querySelectorAll('.filter-input')).map(el => el.value.toLowerCase());
+
       const filtered = items.filter(row => {
         const matchesGlobal = !global || row.some(cell => String(cell).toLowerCase().includes(global));
         const matchesCols = colFilters.every((f, i) => {
@@ -915,8 +944,10 @@
         });
         return matchesGlobal && matchesCols;
       });
+
       renderTableBody(filtered);
     }
+
     function renderTableBody(data) {
       const t = document.getElementById('tableBody');
       if (data.length === 0) {
@@ -958,12 +989,14 @@
         </tr>`;
       }).join('');
     }
+
     function renderFilterRow() {
       const headers = Array(13).fill('').map((_,i) => 
         `<th><input type="text" class="filter-input" data-col="${i}" placeholder="فیلتر..." oninput="applyFilters()"></th>`
       );
       document.getElementById('filterRow').innerHTML = headers.join('') + '<th></th>';
     }
+
     function removeItem(i) {
       if (confirm('این ردیف حذف شود؟')) {
         items.splice(i, 1);
@@ -972,6 +1005,7 @@
         renderDiscrepancyReports();
       }
     }
+
     function calculateDiscrepancy2(stock, count2Str, discrepancy1) {
       if (parseFloat(discrepancy1) === 0) {
         const c2 = count2Str !== '' ? parseFloat(count2Str) : null;
@@ -980,6 +1014,7 @@
       const c2 = count2Str !== '' ? parseFloat(count2Str) || 0 : 0;
       return (c2 - stock).toFixed(2);
     }
+
     function updateDiscrepancyAdd() {
       const stock = parseFloat(document.getElementById('addStock').value) || 0;
       const c1 = parseFloat(document.getElementById('addCount1').value) || 0;
@@ -989,6 +1024,7 @@
       const disc2 = calculateDiscrepancy2(stock, c2, disc1);
       document.getElementById('addDisc2').textContent = disc2;
     }
+
     function updateDiscrepancyEdit() {
       const stock = parseFloat(document.getElementById('editStock').value) || 0;
       const c1 = parseFloat(document.getElementById('editCount1').value) || 0;
@@ -998,6 +1034,7 @@
       const disc2 = calculateDiscrepancy2(stock, c2, disc1);
       document.getElementById('editDisc2').textContent = disc2;
     }
+
     let CURRENT_CALC_TARGET = null;
     function openCalc(id) { 
       CURRENT_CALC_TARGET = id; 
@@ -1025,12 +1062,14 @@
       document.getElementById('calcModal').classList.add('hidden'); 
       CURRENT_CALC_TARGET = null; 
     }
+
     function getLocations() {
       const set = new Set();
       items.forEach(r => { const loc = (r[8] || '').trim(); if (loc) set.add(loc); });
       if (settings.defaultLocation) set.add(settings.defaultLocation);
       return Array.from(set).sort();
     }
+
     function renderDropdown(id, locations) {
       const el = document.getElementById(id);
       if (!el) return;
@@ -1038,6 +1077,7 @@
         ? locations.map(l => `<div class="custom-select-option" onclick="selectLocation('${l.replace(/'/g,"\\'")}','${id}')">${l}</div>`).join('')
         : '<div class="custom-select-option" style="color:#999;">محلی وجود ندارد</div>';
     }
+
     function toggleLocationDropdown(context) {
       hideAllDropdowns();
       const map = {
@@ -1064,12 +1104,14 @@
         inp.focus();
       }
     }
+
     function hideAllDropdowns() {
       ['locationDropdown','addLocationDropdown','editLocationDropdown','settingsLocationDropdown'].forEach(id=>{
         const e=document.getElementById(id); if(e) e.classList.add('hidden');
       });
       currentDropdown = null;
     }
+
     function selectLocation(loc, dropdownId) {
       const map = {
         'locationDropdown': 'globalLocation',
@@ -1081,12 +1123,14 @@
       document.getElementById(inputId).value = loc;
       hideAllDropdowns();
     }
+
     function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
     function closeEditModal() { 
       document.getElementById('editModal').classList.add('hidden');
       currentEditIndex = -1; 
     }
-    console.log('✅ نسخه نهایی — با محدودیت افزودن در حالت تگ، اسکن دقیق‌تر، و import بدون تغییر داده تیم/کاربر.');
+
+    console.log('✅ نسخه نهایی — با محدودیت افزودن در حالت تگ، اسکن دقیق‌تر، و فیلتر ستونی.');
   </script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
