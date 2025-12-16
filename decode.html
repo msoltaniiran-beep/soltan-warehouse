@@ -362,4 +362,369 @@ function exportExcel() {
 }
 
 // بقیه توابع بدون تغییر باقی می‌مانند...
+// [بقیه توابع مانند renderTable, applyFilters, renderFilterRow و ... بدون تغییر]let settings = JSON.parse(localStorage.getItem('appSettings')) || {
+  userName: 'کاربر',
+  teamName: '',
+  defaultLocation: '',
+  minLength: 14,
+  maxLength: 20,
+  searchByTag: false
+};
+
+// اضافه کردن URL وب اپ Google Apps Script
+const SHEETS_API_URL = 'YOUR_WEB_APP_URL_HERE'; // جایگزین کنید با URL واقعی
+let items = [];
+let filters = {};
+let currentEditIndex = -1;
+let currentDropdown = null;
+let LAST_SCAN_METHOD = localStorage.getItem('scanner') || 'camera';
+let barcodeDetector = null;
+let videoStream = null;
+let scanInterval = null;
+let lastScannedValue = '';
+let stableScanCount = 0;
+let zoomLevel = 1.0;
+
+// تابع برای بارگذاری داده‌ها از Google Sheets
+async function loadDataFromSheets() {
+  try {
+    const response = await fetch(SHEETS_API_URL);
+    const data = await response.json();
+    
+    if (data.error) {
+      console.error('خطا در بارگذاری:', data.error);
+      alert('خطا در بارگذاری داده‌ها از Google Sheets');
+      return [];
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('خطای شبکه:', error);
+    alert('عدم اتصال به اینترنت یا سرور');
+    return [];
+  }
+}
+
+// تابع برای ذخیره داده‌ها در Google Sheets
+async function saveDataToSheets() {
+  try {
+    const response = await fetch(SHEETS_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: items })
+    });
+    
+    const result = await response.json();
+    
+    if (result.error) {
+      console.error('خطا در ذخیره:', result.error);
+      alert('خطا در ذخیره داده‌ها در Google Sheets');
+      return false;
+    }
+    
+    console.log('✅ داده‌ها ذخیره شدند:', result);
+    return true;
+  } catch (error) {
+    console.error('خطای شبکه:', error);
+    alert('عدم اتصال به اینترنت یا سرور');
+    return false;
+  }
+}
+
+// تابع برای ذخیره/آپدیت یک آیتم
+async function saveOrUpdateItem(itemData) {
+  try {
+    const response = await fetch(SHEETS_API_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(itemData)
+    });
+    
+    const result = await response.json();
+    
+    if (result.error) {
+      console.error('خطا در ذخیره آیتم:', result.error);
+      alert('خطا در ذخیره آیتم');
+      return false;
+    }
+    
+    console.log('✅ آیتم ذخیره شد:', result);
+    return result;
+  } catch (error) {
+    console.error('خطای شبکه:', error);
+    alert('عدم اتصال به اینترنت یا سرور');
+    return false;
+  }
+}
+
+// تابع برای حذف یک آیتم
+async function deleteItemFromSheets(barcode, location) {
+  try {
+    const response = await fetch(SHEETS_API_URL, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ barcode, location })
+    });
+    
+    const result = await response.json();
+    
+    if (result.error) {
+      console.error('خطا در حذف آیتم:', result.error);
+      alert('خطا در حذف آیتم');
+      return false;
+    }
+    
+    console.log('✅ آیتم حذف شد:', result);
+    return true;
+  } catch (error) {
+    console.error('خطای شبکه:', error);
+    alert('عدم اتصال به اینترنت یا سرور');
+    return false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // بارگذاری تنظیمات از localStorage
+  document.getElementById('settingUserName').value = settings.userName;
+  document.getElementById('settingTeamName').value = settings.teamName;
+  document.getElementById('settingDefaultLocation').value = settings.defaultLocation;
+  document.getElementById('settingMinLength').value = settings.minLength;
+  document.getElementById('settingMaxLength').value = settings.maxLength;
+  document.getElementById('searchByTag').checked = settings.searchByTag;
+  
+  // بارگذاری داده‌ها از Google Sheets
+  items = await loadDataFromSheets();
+  
+  // ادامه کدهای موجود...
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'reports') renderDiscrepancyReports();
+    });
+  });
+
+  if (!settings.defaultLocation) {
+    settings.defaultLocation = 'انبار مرکزی';
+    localStorage.setItem('appSettings', JSON.stringify(settings));
+  }
+
+  document.getElementById('searchByTag').addEventListener('change', function() {
+    settings.searchByTag = this.checked;
+    updateSearchUI();
+  });
+
+  document.getElementById('globalLocationDisplay').textContent = settings.defaultLocation;
+  updateSearchUI();
+  renderTable();
+  renderFilterRow();
+  renderDiscrepancyReports();
+
+  // اضافه کردن دکمه ماشین حساب به فیلدهای عددی
+  ['addCount1','addCount2','editCount1','editCount2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      const wrap = document.createElement('div');
+      wrap.style.position = 'relative';
+      el.parentNode.insertBefore(wrap, el);
+      wrap.appendChild(el);
+      const btn = document.createElement('button');
+      btn.innerHTML = '🧮';
+      btn.style.cssText = 
+        'position:absolute;left:12px;top:50%;transform:translateY(-50%);' +
+        'background:#e0e0e0;border:none;width:40px;height:40px;' +
+        'border-radius:10px;cursor:pointer;font-size:20px;font-weight:bold;';
+      btn.onclick = () => openCalc(id);
+      wrap.appendChild(btn);
+      el.style.paddingLeft = '60px';
+    }
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  const bc = params.get('SCAN_RESULT')?.trim() || params.get('barcode')?.trim();
+  if (bc && !settings.searchByTag) {
+    document.getElementById('searchInput').value = bc;
+    setTimeout(searchOrAdd, 150);
+  }
+});
+
+// تابع saveAdd با تغییر برای ذخیره در Google Sheets
+async function saveAdd() {
+  const bc = document.getElementById('addBarcode').value.trim();
+  const name = document.getElementById('addName').value.trim();
+  const stock = parseFloat(document.getElementById('addStock').value) || 0;
+  const c1 = parseFloat(document.getElementById('addCount1').value) || 0;
+  const c2Raw = document.getElementById('addCount2').value;
+  const c2 = c2Raw !== '' ? parseFloat(c2Raw) || 0 : 0;
+  const disc1 = (c1 - stock).toFixed(2);
+  const disc2 = calculateDiscrepancy2(stock, c2Raw, disc1);
+  
+  const itemData = {
+    barcode: bc,
+    name: name,
+    count1: c1,
+    discrepancy1: disc1,
+    count2: c2,
+    discrepancy2: disc2,
+    tag: document.getElementById('addTag').value.trim(),
+    team: settings.teamName,
+    location: document.getElementById('addLocation').value.trim(),
+    stock: stock,
+    notes: document.getElementById('addNotes').value.trim(),
+    lastUpdate: getNowFa(),
+    user: settings.userName
+  };
+  
+  const result = await saveOrUpdateItem(itemData);
+  
+  if (result) {
+    // بارگذاری مجدد داده‌ها از سرور
+    items = await loadDataFromSheets();
+    renderTable();
+    renderDiscrepancyReports();
+    closeAddModal();
+    document.getElementById('searchInput').value = '';
+  }
+}
+
+// تابع saveEdit با تغییر برای ذخیره در Google Sheets
+async function saveEdit() {
+  if (currentEditIndex < 0) return;
+  
+  const r = items[currentEditIndex];
+  const stock = parseFloat(document.getElementById('editStock').value) || 0;
+  const c1 = parseFloat(document.getElementById('editCount1').value) || 0;
+  const c2Raw = document.getElementById('editCount2').value;
+  const c2 = c2Raw !== '' ? parseFloat(c2Raw) || 0 : 0;
+  
+  const itemData = {
+    barcode: r[0],
+    name: document.getElementById('editName').value.trim(),
+    count1: c1,
+    discrepancy1: (c1 - stock).toFixed(2),
+    count2: c2,
+    discrepancy2: calculateDiscrepancy2(stock, c2Raw, (c1 - stock).toFixed(2)),
+    tag: document.getElementById('editTag').value.trim(),
+    team: settings.teamName,
+    location: document.getElementById('editLocation').value.trim(),
+    stock: stock,
+    notes: document.getElementById('editNotes').value.trim(),
+    lastUpdate: getNowFa(),
+    user: settings.userName
+  };
+  
+  const result = await saveOrUpdateItem(itemData);
+  
+  if (result) {
+    // بارگذاری مجدد داده‌ها از سرور
+    items = await loadDataFromSheets();
+    renderTable();
+    renderDiscrepancyReports();
+    closeEditModal();
+    document.getElementById('searchInput').value = '';
+  }
+}
+
+// تابع removeItem با تغییر برای حذف از Google Sheets
+async function removeItem(i) {
+  if (confirm('این ردیف حذف شود؟')) {
+    const item = items[i];
+    const success = await deleteItemFromSheets(item[0], item[8]);
+    
+    if (success) {
+      // بارگذاری مجدد داده‌ها از سرور
+      items = await loadDataFromSheets();
+      renderTable();
+      renderDiscrepancyReports();
+    }
+  }
+}
+
+// تابع clearAll با تغییر برای حذف از Google Sheets
+async function clearAll() {
+  if (confirm('⚠️ تمام داده‌ها برای همیشه پاک شوند؟')) {
+    // ذخیره آرایه خالی در Google Sheets
+    items = [];
+    await saveDataToSheets();
+    
+    renderTable();
+    renderDiscrepancyReports();
+    alert('✅ تمام داده‌ها پاک شدند.');
+  }
+}
+
+// تابع loadExcel با تغییر برای ذخیره در Google Sheets
+async function loadExcel() {
+  const file = document.getElementById('excelFile').files[0];
+  if (!file) return alert('فایلی انتخاب نشده است.');
+  
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      
+      if (json.length < 2) return alert('فایل خالی است.');
+      
+      items = [];
+      for (let i = 1; i < json.length; i++) {
+        const row = json[i];
+        const bc = String(row[0] || '').trim();
+        if (!bc) continue;
+        
+        const stock = parseFloat(row[9]) || 0;
+        const c1 = parseFloat(row[2]) || 0;
+        const c2 = parseFloat(row[4]) || 0;
+        const disc1 = (c1 - stock).toFixed(2);
+        const disc2 = (c2 - stock).toFixed(2);
+        
+        items.push([
+          bc,
+          row[1] || '',
+          c1,
+          disc1,
+          c2,
+          disc2,
+          row[6] || '',
+          row[7] || '',
+          row[8] || '',
+          stock,
+          row[10] || '',
+          getNowFa(),
+          row[12] || ''
+        ]);
+      }
+      
+      // ذخیره در Google Sheets
+      const success = await saveDataToSheets();
+      
+      if (success) {
+        renderTable();
+        renderDiscrepancyReports();
+        alert(`✅ ${items.length} مورد import شد.`);
+      }
+    } catch (err) {
+      alert('خطا در import: ' + (err.message || 'نامشخص'));
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// تغییر تابع exportExcel برای استفاده از داده‌های فعلی
+function exportExcel() {
+  if (items.length === 0) return alert('داده‌ای برای خروجی وجود ندارد.');
+  const headers = ['بارکد','نام کالا','شمارش۱','مغایرت۱','شمارش۲','مغایرت۲','تگ','تیم','محل','موجودی','توضیحات','آخرین بروزرسانی','کاربر'];
+  const wsData = [headers, ...items.map(r => r.slice(0,13))];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'انبار');
+  XLSX.writeFile(wb, 'انبارگردانی_خروجی.xlsx');
+}
+
+// بقیه توابع بدون تغییر باقی می‌مانند...
 // [بقیه توابع مانند renderTable, applyFilters, renderFilterRow و ... بدون تغییر]
+
