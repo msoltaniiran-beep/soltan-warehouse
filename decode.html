@@ -732,8 +732,6 @@
       lastScannedValue = '';
       stableScanCount = 0;
     }
-
-    // ✅ تابع loadExcel اصلاح‌شده — import عیناً و بدون تکراری
     function loadExcel() {
       const file = document.getElementById('excelFile').files[0];
       if (!file) return alert('فایلی انتخاب نشده است.');
@@ -745,97 +743,37 @@
           const ws = wb.Sheets[wb.SheetNames[0]];
           const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
           if (json.length < 2) return alert('فایل خالی است.');
-
-          const newItems = [];
-          let totalRows = 0;
-          let skippedDuplicates = 0;
-
-          // ساخت set برای شناسایی سریع رکوردهای تکراری (فقط ستون‌های 0 تا 10)
-          const existingKeys = new Set();
-          items.forEach(row => {
-            const normalized = row.slice(0, 11).map(cell => {
-              if (typeof cell === 'number') return cell;
-              const s = String(cell || '').trim();
-              const n = parseFloat(s);
-              return isNaN(n) || s === '' ? s : n;
-            });
-            existingKeys.add(JSON.stringify(normalized));
-          });
-
+          items = [];
           for (let i = 1; i < json.length; i++) {
             const row = json[i];
-            if (!row || row.length === 0) continue;
-            totalRows++;
-
             const bc = String(row[0] || '').trim();
             if (!bc) continue;
-
-            // استخراج ستون‌های اصلی و استانداردسازی
-            const normalizedRow = [
-              bc,
-              String(row[1] || '').trim(),
-              parseFloat(row[2]) || 0,
-              parseFloat(row[2] || 0) - (parseFloat(row[9]) || 0), // disc1 = c1 - stock
-              parseFloat(row[4]) || 0,
-              parseFloat(row[4] || 0) - (parseFloat(row[9]) || 0), // disc2 = c2 - stock
-              String(row[6] || '').trim(),
-              String(row[7] || '').trim(), // ✅ عیناً از اکسل — بدون settings
-              String(row[8] || '').trim(), // ✅ عیناً از اکسل — بدون settings
-              parseFloat(row[9]) || 0,
-              String(row[10] || '').trim()
-            ];
-
-            // گرد به 2 رقم اعشار برای هماهنگی
-            normalizedRow[3] = parseFloat(normalizedRow[3].toFixed(2));
-            normalizedRow[5] = parseFloat(normalizedRow[5].toFixed(2));
-
-            const key = JSON.stringify(normalizedRow);
-
-            if (existingKeys.has(key)) {
-              skippedDuplicates++;
-              continue;
-            }
-
-            // ساخت ردیف نهایی برای ذخیره
-            const newRow = [
-              bc,
-              String(row[1] || ''),
-              normalizedRow[2], // c1
-              normalizedRow[3], // disc1
-              normalizedRow[4], // c2
-              normalizedRow[5], // disc2
-              String(row[6] || ''),
-              String(row[7] || ''), // ✅ بدون override
-              String(row[8] || ''), // ✅ بدون override
-              normalizedRow[9], // stock
-              String(row[10] || ''),
+            const stock = parseFloat(row[9]) || 0;
+            const c1 = parseFloat(row[2]) || 0;
+            const c2 = parseFloat(row[4]) || 0;
+            const disc1 = (c1 - stock).toFixed(2);
+            const disc2 = (c2 - stock).toFixed(2);
+            items.push([
+              bc, row[1] || '', c1, disc1, c2, disc2,
+              row[6] || '',
+              row[7] || '',          // ✅ تیم فقط از اکسل
+              row[8] || settings.defaultLocation || '',  // محل بدون تغییر
+              stock,
+              row[10] || '',
               getNowFa(),
-              settings.userName
-            ];
-
-            newItems.push(newRow);
-            existingKeys.add(key); // جلوگیری از تکرار داخل خود فایل
+              row[12] || ''          // ✅ کاربر فقط از اکسل
+            ]);
           }
-
-          if (newItems.length) {
-            items.push(...newItems);
-            localStorage.setItem('items', JSON.stringify(items));
-          }
-
+          localStorage.setItem('items', JSON.stringify(items));
           renderTable();
           renderDiscrepancyReports();
-
-          const added = newItems.length;
-          alert(`✅ از ${totalRows} ردیف فایل، ${added} مورد جدید اضافه شد و ${skippedDuplicates} مورد تکراری نادیده گرفته شد.`);
-
+          alert(`✅ ${items.length} مورد import شد.`);
         } catch (err) {
-          console.error(err);
           alert('خطا در import: ' + (err.message || 'نامشخص'));
         }
       };
       reader.readAsArrayBuffer(file);
     }
-
     function exportExcel() {
       if (items.length === 0) return alert('داده‌ای برای خروجی وجود ندارد.');
       const headers = ['بارکد','نام کالا','شمارش۱','مغایرت۱','شمارش۲','مغایرت۲','تگ','تیم','محل','موجودی','توضیحات','آخرین بروزرسانی','کاربر'];
@@ -1148,7 +1086,7 @@
       document.getElementById('editModal').classList.add('hidden');
       currentEditIndex = -1; 
     }
-    console.log('✅ نسخه نهایی — import هوشمند با تشخیص تکراری و بدون تغییر داده.');
+    console.log('✅ نسخه نهایی — با محدودیت افزودن در حالت تگ، اسکن دقیق‌تر، و import بدون تغییر داده تیم/کاربر.');
   </script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
