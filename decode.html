@@ -452,7 +452,7 @@
 
     // ✅ تابع ارسال به Google Sheet (فقط در saveAdd/saveEdit)
     async function sendToSheet(row) {
-      const SHEET_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_URL/exec"; // ⚠️ جایگزین کنید
+      const SHEET_URL = "https://script.google.com/macros/s/AKfycbxdyTDHIfyg6qqgOaZYtagCEYWV64L8-4n4zl0ZNb9ePH4FOY6TlChbrYcIQURJrRsvRw/exec"; // ⚠️ جایگزین کنید
 
       try {
         const payload = {
@@ -487,7 +487,7 @@
     let pollingInterval = null;
 
     async function pollFromSheet() {
-      const SHEET_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_URL/exec"; // ⚠️ جایگزین کنید
+      const SHEET_URL = "https://script.google.com/macros/s/AKfycbxdyTDHIfyg6qqgOaZYtagCEYWV64L8-4n4zl0ZNb9ePH4FOY6TlChbrYcIQURJrRsvRw/exec"; // ⚠️ جایگزین کنید
 
       try {
         const url = `${SHEET_URL}?action=list`;
@@ -1186,3 +1186,4 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
 </html>
+
