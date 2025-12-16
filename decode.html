@@ -1,70 +1,201 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>انبارگردانی و شمارش دارایی</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>انبارگردانی سلطان</title>
   <style>
-    body { font-family: Tahoma, sans-serif; background: #f4f7f9; margin: 0; padding: 20px; }
-    .container { max-width: 1600px; margin: 0 auto; }
-    .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
-    h1, h2, h3, h4 { color: #0277bd; }
-    .header-controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-    .header-controls button { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; transition: background 0.2s; }
-    #settingsBtn { background: #ffa000; color: #333; }
-    #scannerBtn { background: #00b0ff; color: white; }
-    #reportsBtn { background: #2e7d32; color: white; }
-    #reportsBtn:hover { background: #1b5e20; }
-    #scannerBtn:hover { background: #01579b; }
-    #settingsBtn:hover { background: #ff8f00; }
-
-    /* Table Styles */
-    .table-container { overflow-x: auto; }
-    .table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-    .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: center; white-space: nowrap; }
-    .table th { background-color: #e1f5fe; color: #01579b; font-weight: bold; }
-    .table tr:nth-child(even) { background-color: #f9f9f9; }
-    .table tbody tr:hover { background-color: #e3f2fd; }
-    .table td:nth-child(2), .table td:nth-child(11) { text-align: right; min-width: 150px; }
-    .table td:nth-child(3), .table td:nth-child(5), .table td:nth-child(10) { font-weight: bold; color: #333; }
-    .table td:nth-child(4), .table td:nth-child(6) { font-weight: bold; color: #c62828; }
-    .table .btn-group button { padding: 4px 8px; font-size: 11px; margin: 1px; }
-
-    /* Input and Search */
-    input[type="text"], input[type="number"], textarea { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
-    #searchInput { width: calc(100% - 22px); }
-    #scanButtonContainer { display: flex; gap: 10px; }
-
-    /* Modals */
-    .modal { position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; }
-    .modal-content { background-color: #fefefe; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-    .modal h3 { text-align: center; color: #01579b; margin-top: 0; }
-    .modal label { display: block; margin-top: 10px; font-weight: bold; color: #555; }
-    .modal input[type="text"], .modal input[type="number"], .modal textarea { margin-bottom: 10px; }
-    .modal button { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; margin-top: 10px; }
-    .modal button.secondary { background: #ddd; color: #333; }
-    .modal button.danger { background: #c62828; color: white; }
-    .modal button:hover:not([disabled]) { opacity: 0.9; }
-    .discrepancy { font-weight: bold; color: #d32f2f; }
-    .modal .calc-display { text-align: right; font-size: 24px; padding: 15px; }
-    .modal .calc-btn { font-size: 18px; padding: 15px 0; }
-
-    /* Custom Select (for Location) */
-    .custom-select-container { position: relative; width: 100%; }
-    .custom-select-dropdown { position: absolute; top: 100%; left: 0; right: 0; border: 1px solid #ccc; background: white; max-height: 200px; overflow-y: auto; z-index: 101; border-radius: 0 0 4px 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    .custom-select-option { padding: 10px; cursor: pointer; text-align: right; }
-    .custom-select-option:hover { background-color: #e1f5fe; }
-    .select-arrow { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #777; }
-
-    /* Camera Modal */
-    #cameraModal .modal-content { width: 100vw; height: 100vh; max-width: 100%; max-height: 100%; padding: 0; border-radius: 0; display: flex; flex-direction: column; }
-    #cameraVideo { width: 100%; height: 100%; object-fit: cover; }
-    .scanner-frame { position: absolute; top: 50%; left: 50%; width: 200px; height: 150px; margin-left: -100px; margin-top: -75px; border: 4px solid #00bcd4; border-radius: 10px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); }
-    .scan-hint { position: absolute; top: 30px; width: 100%; text-align: center; color: white; font-size: 18px; text-shadow: 0 0 5px black; }
-    .zoom-controls { position: absolute; bottom: 80px; width: 100%; text-align: center; display: flex; justify-content: center; gap: 15px; }
-    .zoom-btn { background: rgba(0,0,0,0.6); color: white; border: 1px solid white; padding: 10px 20px; border-radius: 50px; font-size: 18px; }
-
-    /* Report Card */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Vazir', 'IRANSans', Tahoma, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    body { background: #f9fafb; padding: 12px; }
+    .card { background: white; border-radius: 12px; padding: 16px; margin: 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    input, select, textarea, button {
+      width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ccc;
+      border-radius: 8px; font-size: 16px; text-align: right;
+    }
+    input[readonly] { background-color: #f5f5f5; }
+    input[type="number"] { direction: ltr; text-align: right; }
+    button { background: #2e7d32; color: white; border: none; font-weight: bold; cursor: pointer; }
+    button.scan { background: #1976d2; }
+    button.secondary { background: #757575; }
+    button.danger { background: #c62828; }
+    .hidden { display: none; }
+    .table-container {
+      overflow-x: auto;
+      max-height: 350px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+    .table th { background: #e8f5e9; position: sticky; top: 0; }
+    .table thead tr:nth-child(2) th { background: #f1f8e9; padding: 4px; }
+    .discrepancy { font-weight: bold; color: #c62828; }
+    .duplicate { background-color: #ffebee !important; }
+    .actions { text-align: center; white-space: nowrap; }
+    .btn-icon { width: auto; padding: 5px 10px; font-size: 14px; margin: 2px; }
+    h2, h3 { text-align: center; color: #2e7d32; margin-bottom: 12px; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+    .toolbar > * { flex: 1; min-width: 160px; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 8px;
+      background: #e9ecef;
+      border: none;
+      border-radius: 8px 8px 0 0;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    .tab-btn.active { background: #2e7d32; color: white; }
+    .tab-content { display: none; padding-top: 16px; border-top: 2px solid #2e7d32; }
+    .tab-content.active { display: block; }
+    .modal {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      width: 95%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .modal.hidden { display: none; }
+    .filter-input { width: 100% !important; font-size: 12px !important; padding: 4px 6px !important; }
+    .custom-select-container {
+      position: relative;
+      width: 100%;
+    }
+    .custom-select-container input {
+      padding-right: 36px;
+    }
+    .select-arrow {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: auto;
+      cursor: pointer;
+      color: #757575;
+      font-size: 14px;
+    }
+    .custom-select-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #aaa;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      z-index: 10;
+      max-height: 200px;
+      overflow-y: auto;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .custom-select-dropdown.hidden { display: none; }
+    .custom-select-option {
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+      font-size: 15px;
+    }
+    .custom-select-option:hover { background: #f0f8f0; }
+    .custom-select-option:last-child { border-bottom: none; }
+    #cameraVideo {
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+      background: #000;
+      display: block;
+    }
+    .scanner-frame {
+      position: absolute;
+      top: 25%;
+      left: 10%;
+      width: 80%;
+      height: 50%;
+      border: 3px solid #2196f3;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.6);
+      pointer-events: none;
+      border-radius: 4px;
+    }
+    .scan-hint {
+      position: absolute;
+      top: 8%;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      color: white;
+      font-size: 16px;
+      text-shadow: 0 1px 4px #000;
+      padding: 0 20px;
+      pointer-events: none;
+    }
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 100;
+    }
+    .zoom-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.85);
+      border: none;
+      font-size: 24px;
+      font-weight: bold;
+      color: #1976d2;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+    .calc-btn { 
+      background: #e0e0e0; 
+      color: #333; 
+      padding: 16px 0;
+      margin: 4px;
+      font-size: 22px;
+      font-weight: bold;
+      border-radius: 12px;
+      border: 1px solid #bbb;
+      width: 22%;
+      height: 56px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+    .calc-display {
+      width: 100%;
+      padding: 16px;
+      margin: 8px 0;
+      text-align: left;
+      direction: ltr;
+      font-size: 22px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
     .calc-apply {
       background: #2e7d32 !important;
       width: 100% !important;
@@ -79,269 +210,234 @@
       width: 100%; padding: 12px; background: #f5f5f5; border-radius: 8px;
       font-weight: bold; color: #2e7d32; text-align: center; border: 1px solid #ddd;
     }
-    .sync-status {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      padding: 10px 20px;
-      background: #1976d2;
-      color: white;
-      border-radius: 20px;
-      font-size: 14px;
-      z-index: 1000;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      display: none;
-    }
-    .sync-status.show { display: block; }
-    .sync-status.success { background: #2e7d32; }
-    .sync-status.error { background: #c62828; }
   </style>
 </head>
 <body>
-  <!-- وضعیت همگام‌سازی -->
-  <div id="syncStatus" class="sync-status"></div>
-
-  <div class="container">
-    <div class="header-controls">
-        <button id="scannerBtn" onclick="openScanner()">🔍 شروع اسکنر</button>
-        <button id="reportsBtn" onclick="renderDiscrepancyReports()">📊 نمایش گزارش مغایرت‌ها</button>
-        <button id="settingsBtn" onclick="openSettingsModal()">⚙️ تنظیمات</button>
+  <div class="card">
+    <h2>انبارگردانی سلطان</h2>
+    <div class="tabs" id="tabsContainer">
+      <button class="tab-btn active" data-tab="main">عملیات</button>
+      <button class="tab-btn" data-tab="reports">📊 گزارشات</button>
+      <button class="tab-btn" data-tab="settings">⚙️ تنظیمات</button>
     </div>
-
-    <div class="card">
-        <h3>جستجو و عملیات</h3>
-        <div style="display:flex; gap:10px; margin-bottom:12px;">
-            <input type="text" id="searchInput" placeholder="بارکد را وارد کنید" oninput="applyFilters()" style="flex-grow:1;" />
-            <div id="scanButtonContainer">
-                <button onclick="scanBarcode('camera')" class="secondary" style="padding:10px;">📸 دوربین</button>
-                <button onclick="scanBarcode('gamma')" class="secondary" style="padding:10px;">🔌 Gamma</button>
-            </div>
+    <div class="tab-content active" id="tab-main">
+      <div id="scanButtonContainer" class="toolbar">
+        <button onclick="startScan()" class="scan">📸 اسکن بارکد</button>
+        <div>
+          <label>📍 محل:</label>
+          <div class="location-display" id="globalLocationDisplay">انبار مرکزی</div>
         </div>
-        <div class="location-display">
-            محل پیش‌فرض فعلی: <span id="globalLocationDisplay">انبار مرکزی</span>
-            <button onclick="toggleLocationDropdown('main')" style="float:left; padding: 0 5px; background:none; border:none; color:#0277bd;">تغییر</button>
-            <div id="locationDropdown" class="custom-select-dropdown hidden"></div>
-        </div>
+      </div>
+      <input type="text" id="searchInput" placeholder="بارکد را وارد کنید" autofocus />
+      <button onclick="searchOrAdd()">🔍 جستجو / افزودن</button>
     </div>
-
-    <!-- مودال‌ها -->
-    <div id="cameraModal" class="modal hidden">
-        <div style="position:relative; width:100vw; height:100vh;">
-          <video id="cameraVideo" playsinline></video>
-          <div class="scanner-frame"></div>
-          <div class="scan-hint" id="scanHint">
-            🔍 بارکد را کاملاً در چهارچوب آبی قرار دهید.<br>
-            <span id="hintZoom">🔍 زوم: ×1.0</span>
-          </div>
-          <div class="zoom-controls">
-            <button class="zoom-btn" onclick="zoomOut()">–</button>
-            <button class="zoom-btn" onclick="resetZoom()">↺</button>
-            <button class="zoom-btn" onclick="zoomIn()">+</button>
-          </div>
-        </div>
-        <div style="padding:16px; text-align:center;">
-          <button onclick="stopCamera()" class="danger" style="width:auto; padding:12px 24px; font-size:16px;">⏹️ توقف اسکن</button>
+    <div class="tab-content" id="tab-reports">
+      <h3>📊 گزارش مغایرت‌ها</h3>
+      <div class="report-card">
+        <h4>🔴 مغایرت‌های شمارش ۱ (غیرصفر)</h4>
+        <div id="discrepancy1List" style="max-height:200px; overflow-y:auto;">
+          <p style="text-align:center; color:#666;">در حال بارگذاری...</p>
         </div>
       </div>
-
-    <div id="addModal" class="modal hidden">
-        <div class="modal-content">
-          <h3>افزودن کالای جدید</h3>
-          <label>بارکد:</label>
-          <input type="text" id="addBarcode" readonly />
-          <label>نام کالا:</label>
-          <input type="text" id="addName" />
-          <label>موجودی سیستمی:</label>
-          <input type="number" id="addStock" step="0.01" readonly />
-          <label>شمارش ۱:</label>
-          <input type="number" id="addCount1" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyAdd()" />
-          <div>مغایرت۱: <span id="addDisc1" class="discrepancy">—</span></div>
-          <label>شمارش ۲:</label>
-          <input type="number" id="addCount2" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyAdd()" />
-          <div>مغایرت۲: <span id="addDisc2" class="discrepancy">—</span></div>
-          <label>تگ:</label>
-          <input type="text" id="addTag" />
-          <label>تیم:</label>
-          <input type="text" id="addTeam" readonly value="کاربر" />
-          <label>محل:</label>
-          <div class="custom-select-container">
-            <input type="text" id="addLocation" autocomplete="off" />
-            <div class="custom-select-dropdown hidden" id="addLocationDropdown"></div>
-            <span class="select-arrow" onclick="toggleLocationDropdown('add')">▼</span>
-          </div>
-          <label>توضیحات:</label>
-          <textarea id="addNotes" rows="2"></textarea>
-          <div style="display:flex; gap:8px; margin-top:16px;">
-            <button onclick="saveAdd()" style="flex:1;">✅ افزودن</button>
-            <button onclick="closeAddModal()" class="secondary" style="flex:1;">❌ لغو</button>
-          </div>
+      <div class="report-card" style="margin-top:16px;">
+        <h4>🟠 مغایرت‌های شمارش ۲ (غیرصفر)</h4>
+        <div id="discrepancy2List" style="max-height:200px; overflow-y:auto;">
+          <p style="text-align:center; color:#666;">در حال بارگذاری...</p>
         </div>
       </div>
-
-    <div id="editModal" class="modal hidden">
-        <div class="modal-content">
-          <h3>ویرایش کالا</h3>
-          <label>بارکد:</label>
-          <input type="text" id="editBarcode" readonly />
-          <label>نام کالا:</label>
-          <input type="text" id="editName" />
-          <label>موجودی سیستمی:</label>
-          <input type="number" id="editStock" step="0.01" readonly />
-          <label>شمارش ۱:</label>
-          <input type="number" id="editCount1" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyEdit()" />
-          <div>مغایرت۱: <span id="editDisc1" class="discrepancy">—</span></div>
-          <label>شمارش ۲:</label>
-          <input type="number" id="editCount2" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyEdit()" />
-          <div>مغایرت۲: <span id="editDisc2" class="discrepancy">—</span></div>
-          <label>تگ:</label>
-          <input type="text" id="editTag" />
-          <label>تیم:</label>
-          <input type="text" id="editTeam" readonly value="کاربر" />
-          <label>محل:</label>
-          <div class="custom-select-container">
-            <input type="text" id="editLocation" autocomplete="off" />
-            <div class="custom-select-dropdown hidden" id="editLocationDropdown"></div>
-            <span class="select-arrow" onclick="toggleLocationDropdown('edit')">▼</span>
-          </div>
-          <label>توضیحات:</label>
-          <textarea id="editNotes" rows="2"></textarea>
-          <div style="display:flex; gap:8px; margin-top:16px;">
-            <button onclick="saveEdit()" style="flex:1;">💾 ذخیره</button>
-            <button onclick="closeEditModal()" class="secondary" style="flex:1;">❌ لغو</button>
-          </div>
-        </div>
+      <button onclick="exportDiscrepancies()" style="width:100%; margin-top:16px; background:#d32f2f;">📤 خروجی مغایرت‌ها (اکسل)</button>
+    </div>
+    <div class="tab-content" id="tab-settings">
+      <h3>⚙️ تنظیمات سیستم</h3>
+      <label>👤 نام کاربر:</label>
+      <input type="text" id="settingUserName" placeholder="نام شما" />
+      <label>👥 نام تیم (پیش‌فرض):</label>
+      <input type="text" id="settingTeamName" placeholder="مثلاً: تیم الف" />
+      <label>📍 محل پیش‌فرض (نمایش در عملیات):</label>
+      <div class="custom-select-container">
+        <input type="text" id="settingDefaultLocation" placeholder="محل پیش‌فرض را وارد کنید" autocomplete="off" />
+        <div class="custom-select-dropdown hidden" id="settingsLocationDropdown"></div>
+        <span class="select-arrow" onclick="toggleLocationDropdown('settings')">▼</span>
       </div>
-
-    <div id="calcModal" class="modal hidden">
-        <div class="modal-content">
-          <h3>ماشین‌حساب</h3>
-          <input type="text" id="calcDisplay" class="calc-display" inputmode="numeric" pattern="[0-9+\-*/().]*"
-                 placeholder="12+5*(3-1)" />
-          <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:6px; margin-top:10px;">
-            <button class="calc-btn" onclick="calcAppend('7')">7</button>
-            <button class="calc-btn" onclick="calcAppend('8')">8</button>
-            <button class="calc-btn" onclick="calcAppend('9')">9</button>
-            <button class="calc-btn" onclick="calcAppend('/')">÷</button>
-            <button class="calc-btn" onclick="calcAppend('4')">4</button>
-            <button class="calc-btn" onclick="calcAppend('5')">5</button>
-            <button class="calc-btn" onclick="calcAppend('6')">6</button>
-            <button class="calc-btn" onclick="calcAppend('*')">×</button>
-            <button class="calc-btn" onclick="calcAppend('1')">1</button>
-            <button class="calc-btn" onclick="calcAppend('2')">2</button>
-            <button class="calc-btn" onclick="calcAppend('3')">3</button>
-            <button class="calc-btn" onclick="calcAppend('-')">−</button>
-            <button class="calc-btn" onclick="calcAppend('0')">0</button>
-            <button class="calc-btn" onclick="calcAppend('(')">(</button>
-            <button class="calc-btn" onclick="calcAppend(')')">)</button>
-            <button class="calc-btn" onclick="calcAppend('+')">+</button>
-            <button class="calc-btn" onclick="calcAppend('.')">.</button>
-            <button class="calc-btn" style="background:#ffc107;color:#000;" onclick="calcClear()">C</button>
-            <button class="calc-btn" style="background:#2196f3;color:white;" onclick="calcApply()">=</button>
-            <button class="calc-btn" onclick="calcBackspace()">⌫</button>
-          </div>
-          <button class="calc-btn calc-apply" onclick="calcApply()">✅ اعمال نتیجه</button>
-          <button class="secondary" style="width:100%; margin-top:10px; padding:14px; font-size:18px;"
-                  onclick="closeCalcModal()">❌ لغو</button>
-        </div>
-      </div>
-
-    <div id="settingsModal" class="modal hidden">
-        <div class="modal-content">
-          <h3>تنظیمات برنامه</h3>
-          <label>👤 نام کاربر جاری:</label>
-          <input type="text" id="settingUserName" value="کاربر" />
-          <label>🏢 نام تیم:</label>
-          <input type="text" id="settingTeamName" />
-          <label>📍 محل پیش‌فرض:</label>
-          <div class="custom-select-container">
-            <input type="text" id="settingDefaultLocation" autocomplete="off" />
-            <div class="custom-select-dropdown hidden" id="settingsLocationDropdown"></div>
-            <span class="select-arrow" onclick="toggleLocationDropdown('settings')">▼</span>
-          </div>
-          <label>📏 حداقل طول بارکد:</label>
-          <input type="number" id="settingMinLength" value="14" />
-          <label>📏 حداکثر طول بارکد:</label>
-          <input type="number" id="settingMaxLength" value="20" />
-          <label><input type="checkbox" id="settingSearchByTag" /> جستجو بر اساس تگ انجام شود</label>
-
-          <!-- تنظیمات Google Sheets -->
-          <h4 style="margin:20px 0 8px;">🌐 اتصال Google Sheets</h4>
-          <label>🔗 URL اسکریپت:</label>
-          <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/..." />
-          <button onclick="testScriptConnection()" class="secondary" style="width:100%; margin:8px 0;">🔗 تست اتصال اسکریپت</button>
-          <button onclick="loadFromGoogleAppsScript()" class="secondary" style="width:100%; margin:8px 0;">🔄 بارگذاری از Sheets</button>
-          <button onclick="saveToGoogleAppsScript()" class="secondary" style="width:100%; margin:8px 0;">💾 ذخیره در Sheets (با ساختار جدید)</button>
-
-          <h4 style="margin:20px 0 8px;">🗃️ مدیریت داده</h4>
-          <input type="file" id="excelFile" accept=".xlsx,.xls" style="width:100%; margin:6px 0;" />
-          <button onclick="importExcel()" style="width:100%; margin:6px 0;">📥 import اکسل</button>
-          <button onclick="exportExcel()" style="width:100%; margin:6px 0; background:#1976d2;">📤 خروجی اکسل</button>
-          <button onclick="clearAll()" class="danger" style="width:100%; margin:6px 0;">🗑️ پاک کردن همه داده‌ها</button>
-          <button onclick="saveSettings()" style="margin-top:20px; width:100%;">✅ ذخیره تنظیمات</button>
-        </div>
-      </div>
-
-    <div class="card" id="mainTableCard">
-        <h3>لیست کل داده‌ها (<span id="totalCount">0</span> مورد)</h3>
-        <input type="text" id="globalSearch" placeholder="🔍 جستجو در همه ستون‌ها..." oninput="applyFilters()" style="margin-bottom:12px;" />
-        <div class="table-container">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>بارکد</th>
-                <th>نام کالا</th>
-                <th>شمارش۱</th>
-                <th>مغایرت۱</th>
-                <th>شمارش۲</th>
-                <th>مغایرت۲</th>
-                <th>تگ</th>
-                <th>تیم</th>
-                <th>محل</th>
-                <th>موجودی</th>
-                <th>توضیحات</th>
-                <th>آخرین بروزرسانی</th>
-                <th>کاربر</th>
-                <th>عملیات</th>
-              </tr>
-              <tr id="filterRow"></tr>
-            </thead>
-            <tbody id="tableBody">
-              <tr><td colspan="14" style="text-align:center;">داده‌ای وجود ندارد.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    <div class="card report-card" id="reportCard" style="display:none;">
-        <h4>گزارش مغایرت‌ها</h4>
-        <div id="discrepancyReportBody"></div>
-        <button onclick="renderTable()" style="width:100%; margin-top:15px; background:#795548; color:white;">بازگشت به لیست اصلی</button>
+      <label>🔢 حداقل طول بارکد:</label>
+      <input type="number" id="settingMinLength" min="4" max="50" value="14" />
+      <label>🔢 حداکثر طول بارکد:</label>
+      <input type="number" id="settingMaxLength" min="4" max="50" value="20" />
+      <label class="secondary" style="margin-top:16px;">
+        <input type="checkbox" id="searchByTag" /> 
+        🔍 جستجو بر اساس تگ (به‌جای بارکد)
+      </label>
+      <p style="font-size:13px; color:#555; margin-top:4px;">
+        در این حالت، فیلد جستجو به «تگ» تغییر می‌کند و دکمه اسکن پنهان می‌شود.
+      </p>
+      <h4 style="margin:20px 0 8px;">🔄 تغییر روش اسکن</h4>
+      <button onclick="changeScanner()" class="secondary" style="width:100%;">🔄 تغییر اسکنر</button>
+      <p style="font-size:13px; margin-top:6px; color:#555;">
+        ✅ پیشنهاد: <strong>Gamma Scanner</strong> — سریع، بدون تبلیغ، <strong>Batch Scan</strong>، Zoom، Flash، Export CSV و قابلیت اسکن QR رمز وای‌فای (طبق وبسایت رسمی).
+      </p>
+      <h4 style="margin:20px 0 8px;">🗃️ مدیریت داده</h4>
+      <input type="file" id="excelFile" accept=".xlsx,.xls" style="width:100%; margin:6px 0;" />
+      <button onclick="loadExcel()" style="width:100%; margin:6px 0;">📥 import اکسل</button>
+      <button onclick="exportExcel()" style="width:100%; margin:6px 0; background:#1976d2;">📤 خروجی اکسل</button>
+      <button onclick="clearAll()" class="danger" style="width:100%; margin:6px 0;">🗑️ پاک کردن همه داده‌ها</button>
+      <button onclick="saveSettings()" style="margin-top:20px; width:100%;">✅ ذخیره تنظیمات</button>
     </div>
   </div>
-
-<script>
-    // ============ توابع کمکی تاریخ و زمان ============
-    function getNowFa() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = (now.getMonth() + 1).toString().padStart(2, '0');
-      const day = now.getDate().toString().padStart(2, '0');
-      const hours = now.getHours().toString().padStart(2, '0');
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      return `${day}/${month}/${year} ${hours}:${minutes}`;
-    }
-
-    // ============ تنظیمات اولیه ============
+  <div class="card" id="mainTableCard">
+    <h3>لیست کل داده‌ها (<span id="totalCount">0</span> مورد)</h3>
+    <input type="text" id="globalSearch" placeholder="🔍 جستجو در همه ستون‌ها..." oninput="applyFilters()" style="margin-bottom:12px;" />
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>بارکد</th>
+            <th>نام کالا</th>
+            <th>شمارش۱</th>
+            <th>مغایرت۱</th>
+            <th>شمارش۲</th>
+            <th>مغایرت۲</th>
+            <th>تگ</th>
+            <th>تیم</th>
+            <th>محل</th>
+            <th>موجودی</th>
+            <th>توضیحات</th>
+            <th>آخرین بروزرسانی</th>
+            <th>کاربر</th>
+            <th>عملیات</th>
+          </tr>
+          <tr id="filterRow"></tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="14" style="text-align:center;">داده‌ای وجود ندارد.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div id="cameraModal" class="modal hidden">
+    <div style="position:relative; width:100vw; height:100vh;">
+      <video id="cameraVideo" playsinline></video>
+      <div class="scanner-frame"></div>
+      <div class="scan-hint" id="scanHint">
+        🔍 بارکد را کاملاً در چهارچوب آبی قرار دهید.<br>
+        <span id="hintZoom">🔍 زوم: ×1.0</span>
+      </div>
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoomOut()">–</button>
+        <button class="zoom-btn" onclick="resetZoom()">↺</button>
+        <button class="zoom-btn" onclick="zoomIn()">+</button>
+      </div>
+    </div>
+    <div style="padding:16px; text-align:center;">
+      <button onclick="stopCamera()" class="danger" style="width:auto; padding:12px 24px; font-size:16px;">⏹️ توقف اسکن</button>
+    </div>
+  </div>
+  <div id="addModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>افزودن کالای جدید</h3>
+      <label>بارکد:</label>
+      <input type="text" id="addBarcode" readonly />
+      <label>نام کالا:</label>
+      <input type="text" id="addName" />
+      <label>موجودی سیستمی:</label>
+      <input type="number" id="addStock" step="0.01" readonly />
+      <label>شمارش ۱:</label>
+      <input type="number" id="addCount1" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyAdd()" />
+      <div>مغایرت۱: <span id="addDisc1" class="discrepancy">—</span></div>
+      <label>شمارش ۲:</label>
+      <input type="number" id="addCount2" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyAdd()" />
+      <div>مغایرت۲: <span id="addDisc2" class="discrepancy">—</span></div>
+      <label>تگ:</label>
+      <input type="text" id="addTag" />
+      <label>تیم:</label>
+      <input type="text" id="addTeam" readonly />
+      <label>محل:</label>
+      <div class="custom-select-container">
+        <input type="text" id="addLocation" autocomplete="off" />
+        <div class="custom-select-dropdown hidden" id="addLocationDropdown"></div>
+        <span class="select-arrow" onclick="toggleLocationDropdown('add')">▼</span>
+      </div>
+      <label>توضیحات:</label>
+      <textarea id="addNotes" rows="2"></textarea>
+      <div style="display:flex; gap:8px; margin-top:16px;">
+        <button onclick="saveAdd()" style="flex:1;">✅ افزودن</button>
+        <button onclick="closeAddModal()" class="secondary" style="flex:1;">❌ لغو</button>
+      </div>
+    </div>
+  </div>
+  <div id="editModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>ویرایش کالا</h3>
+      <label>بارکد:</label>
+      <input type="text" id="editBarcode" readonly />
+      <label>نام کالا:</label>
+      <input type="text" id="editName" />
+      <label>موجودی سیستمی:</label>
+      <input type="number" id="editStock" step="0.01" readonly />
+      <label>شمارش ۱:</label>
+      <input type="number" id="editCount1" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyEdit()" />
+      <div>مغایرت۱: <span id="editDisc1" class="discrepancy">—</span></div>
+      <label>شمارش ۲:</label>
+      <input type="number" id="editCount2" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyEdit()" />
+      <div>مغایرت۲: <span id="editDisc2" class="discrepancy">—</span></div>
+      <label>تگ:</label>
+      <input type="text" id="editTag" />
+      <label>تیم:</label>
+      <input type="text" id="editTeam" readonly />
+      <label>محل:</label>
+      <div class="custom-select-container">
+        <input type="text" id="editLocation" autocomplete="off" />
+        <div class="custom-select-dropdown hidden" id="editLocationDropdown"></div>
+        <span class="select-arrow" onclick="toggleLocationDropdown('edit')">▼</span>
+      </div>
+      <label>توضیحات:</label>
+      <textarea id="editNotes" rows="2"></textarea>
+      <div style="display:flex; gap:8px; margin-top:16px;">
+        <button onclick="saveEdit()" style="flex:1;">💾 ذخیره</button>
+        <button onclick="closeEditModal()" class="secondary" style="flex:1;">❌ لغو</button>
+      </div>
+    </div>
+  </div>
+  <div id="calcModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>ماشین‌حساب</h3>
+      <input type="text" id="calcDisplay" class="calc-display" inputmode="numeric" pattern="[0-9+\-*/().]*" 
+             placeholder="12+5*(3-1)" />
+      <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:6px; margin-top:10px;">
+        <button class="calc-btn" onclick="calcAppend('7')">7</button>
+        <button class="calc-btn" onclick="calcAppend('8')">8</button>
+        <button class="calc-btn" onclick="calcAppend('9')">9</button>
+        <button class="calc-btn" onclick="calcAppend('/')">÷</button>
+        <button class="calc-btn" onclick="calcAppend('4')">4</button>
+        <button class="calc-btn" onclick="calcAppend('5')">5</button>
+        <button class="calc-btn" onclick="calcAppend('6')">6</button>
+        <button class="calc-btn" onclick="calcAppend('*')">×</button>
+        <button class="calc-btn" onclick="calcAppend('1')">1</button>
+        <button class="calc-btn" onclick="calcAppend('2')">2</button>
+        <button class="calc-btn" onclick="calcAppend('3')">3</button>
+        <button class="calc-btn" onclick="calcAppend('-')">−</button>
+        <button class="calc-btn" onclick="calcAppend('0')">0</button>
+        <button class="calc-btn" onclick="calcAppend('(')">(</button>
+        <button class="calc-btn" onclick="calcAppend(')')">)</button>
+        <button class="calc-btn" onclick="calcAppend('+')">+</button>
+        <button class="calc-btn" onclick="calcAppend('.')">.</button>
+        <button class="calc-btn" style="background:#ffc107;color:#000;" onclick="calcClear()">C</button>
+        <button class="calc-btn" style="background:#2196f3;color:white;" onclick="calcApply()">=</button>
+        <button class="calc-btn" onclick="calcBackspace()">⌫</button>
+      </div>
+      <button class="calc-btn calc-apply" onclick="calcApply()">✅ اعمال نتیجه</button>
+      <button class="secondary" style="width:100%; margin-top:10px; padding:14px; font-size:18px;" 
+              onclick="closeCalcModal()">❌ لغو</button>
+    </div>
+  </div>
+  <script>
     let settings = JSON.parse(localStorage.getItem('appSettings')) || {
       userName: 'کاربر',
       teamName: '',
-      defaultLocation: 'انبار مرکزی',
+      defaultLocation: '',
       minLength: 14,
       maxLength: 20,
-      searchByTag: false,
-      scriptUrl: ''
+      searchByTag: false
     };
-
     let items = JSON.parse(localStorage.getItem('items')) || [];
     let filters = {};
     let currentEditIndex = -1;
@@ -353,648 +449,66 @@
     let lastScannedValue = '';
     let stableScanCount = 0;
     let zoomLevel = 1.0;
-    let CURRENT_CALC_TARGET = null;
 
     document.addEventListener('DOMContentLoaded', () => {
-        // تنظیمات اولیه UI
-        document.getElementById('settingUserName').value = settings.userName;
-        document.getElementById('settingTeamName').value = settings.teamName || '';
-        document.getElementById('settingDefaultLocation').value = settings.defaultLocation;
-        document.getElementById('settingMinLength').value = settings.minLength;
-        document.getElementById('settingMaxLength').value = settings.maxLength;
-        document.getElementById('settingSearchByTag').checked = settings.searchByTag;
-        document.getElementById('scriptUrl').value = settings.scriptUrl;
-        document.getElementById('globalLocationDisplay').textContent = settings.defaultLocation;
-
-        updateSearchUI();
-        renderTable();
-        renderDiscrepancyReports();
-        document.getElementById('totalCount').textContent = items.length;
-    });
-
-    // ============ توابع Google Apps Script (سرور) ============
-
-    // نمایش وضعیت
-    function showSyncStatus(message, type = 'info') {
-      const statusEl = document.getElementById('syncStatus');
-      statusEl.textContent = message;
-      statusEl.className = 'sync-status show';
-      statusEl.classList.remove('success', 'error');
-      if (type === 'success') statusEl.classList.add('success');
-      else if (type === 'error') statusEl.classList.add('error');
-
-      setTimeout(() => {
-        statusEl.classList.remove('show');
-      }, 3000);
-    }
-
-    // تست اتصال به اسکریپت
-    async function testScriptConnection() {
-      const scriptUrl = document.getElementById('scriptUrl').value.trim();
-
-      if (!scriptUrl) {
-        alert('لطفاً URL اسکریپت را وارد کنید');
-        return;
-      }
-
-      showSyncStatus('🔄 در حال تست اتصال...', 'info');
-
-      try {
-        // استفاده از doGet ساده برای تست
-        const response = await fetch(scriptUrl);
-
-        if (response.ok) {
-          settings.scriptUrl = scriptUrl;
-          localStorage.setItem('appSettings', JSON.stringify(settings));
-          showSyncStatus('✅ اتصال موفق!', 'success');
-          alert('✅ اتصال برقرار شد!');
-        } else {
-          throw new Error(`خطای HTTP: ${response.status}`);
-        }
-      } catch (error) {
-        console.error(error);
-        showSyncStatus('❌ اتصال ناموفق', 'error');
-        alert(`❌ خطا در اتصال:\n${error.message}\nاطمینان حاصل کنید که URL صحیح است و اسکریپت برای اجرا شدن در حالت عمومی (Anyone) تنظیم شده است.`);
-      }
-    }
-
-    // بارگذاری از Google Apps Script
-    async function loadFromGoogleAppsScript() {
-      if (!settings.scriptUrl) {
-        alert('لطفاً ابتدا URL اسکریپت را وارد و تست کنید');
-        return;
-      }
-
-      showSyncStatus('🔄 در حال بارگذاری...', 'info');
-
-      try {
-        const response = await fetch(settings.scriptUrl);
-
-        if (!response.ok) {
-          throw new Error(`خطای HTTP: ${response.status}`);
-        }
-
-        const dataText = await response.text();
-        const data = JSON.parse(dataText);
-
-        if (Array.isArray(data)) {
-          items = data;
-          localStorage.setItem('items', JSON.stringify(items));
-          showSyncStatus(`✅ ${items.length} مورد بارگذاری شد`, 'success');
-          renderTable();
-          renderDiscrepancyReports();
-        } else {
-          showSyncStatus('📭 داده‌ای موجود نیست یا ساختار اشتباه است', 'info');
-        }
-      } catch (error) {
-        console.error('خطا در بارگذاری:', error);
-        showSyncStatus('❌ خطا در بارگذاری', 'error');
-        alert(`خطا در بارگذاری: ${error.message}`);
-      }
-    }
-    
-    // **تغییر کلیدی: ارسال payload با پارامتر action**
-    async function saveToGoogleAppsScript(payload) {
-        if (!settings.scriptUrl) {
-            showSyncStatus('❌ URL اسکریپت تنظیم نشده است.', 'error');
-            return { success: false };
-        }
-        
-        showSyncStatus(`🔄 در حال ارسال ${payload.action} به سرور...`, 'info');
-
-        try {
-            const response = await fetch(settings.scriptUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                throw new Error(`خطای HTTP: ${response.status}`);
-            }
-
-            const result = await response.json();
-
-            if (result.success) {
-                showSyncStatus('✅ ذخیره نهایی در شیت موفقیت آمیز بود.', 'success');
-                return { success: true };
-            } else {
-                throw new Error(result.error || 'پاسخ سرور ناموفق بود.');
-            }
-
-        } catch (error) {
-            console.error('خطا در ذخیره سمت سرور:', error);
-            showSyncStatus('❌ ذخیره در شیت ناموفق بود.', 'error');
-            alert(`❌ خطای سمت سرور:\n${error.message}`);
-            return { success: false };
-        }
-    }
-
-    async function exportExcel() {
-        if (!items.length) {
-            return alert('داده‌ای برای خروجی گرفتن وجود ندارد.');
-        }
-        
-        showSyncStatus('🔄 در حال آماده‌سازی خروجی اکسل...', 'info');
-        
-        const headers = [
-            'بارکد', 'نام کالا', 'شمارش۱', 'مغایرت۱', 'شمارش۲', 'مغایرت۲',
-            'تگ', 'تیم', 'محل', 'موجودی', 'توضیحات', 'آخرین بروزرسانی', 'کاربر'
-        ];
-        
-        const exportData = [headers, ...items];
-
-        // استفاده از پایتون برای ساخت فایل اکسل
-        try {
-            const response = await fetch('/api/run_python', { // فرض بر این است که این مسیر برای اجرای پایتون وجود دارد
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    code: `
-import pandas as pd
-import io
-
-data = ${JSON.stringify(exportData)}
-df = pd.DataFrame(data[1:], columns=data[0])
-output = io.BytesIO()
-df.to_excel(output, index=False, engine='xlsxwriter')
-output.seek(0)
-with open('[/mnt/data/inventory_export.xlsx'](https://storage.gapgpt.app/media/code_interpreter/8b7c82e5-05b7-44f4-9f7d-76601e0fbb5c/inventory_export.xlsx%27), 'wb') as f:
-    f.write(output.read())
-print("File saved to [/mnt/data/inventory_export.xlsx"](https://storage.gapgpt.app/media/code_interpreter/8b7c82e5-05b7-44f4-9f7d-76601e0fbb5c/inventory_export.xlsx%22))
-`
-                })
-            });
-            
-            if (response.ok) {
-                showSyncStatus('✅ فایل اکسل آماده دانلود است.', 'success');
-                // در محیط واقعی، اینجا باید لینک دانلود فایل تولید شده ارائه شود.
-                alert('فایل "inventory_export.xlsx" آماده ذخیره است.');
-            } else {
-                throw new Error('خطا در اجرای پایتون.');
-            }
-        } catch(e) {
-            console.error(e);
-            showSyncStatus('❌ خطای ساخت اکسل.', 'error');
-        }
-    }
-
-    async function clearAll() {
-        if (!confirm('⚠️ آیا مطمئنید که می‌خواهید تمام داده‌ها را پاک کنید؟ این عملیات برگشت‌پذیر نیست!')) return;
-
-        // ارسال دستور پاکسازی به سرور
-        const payload = { action: 'clear_all' }; // سرور باید این اکشن جدید را پشتیبانی کند
-
-        if (settings.scriptUrl) {
-            // ابتدا سعی کن سرور را پاک کنی
-            const saveResult = await saveToGoogleAppsScript(payload);
-            if (saveResult.success) {
-                items = [];
-                localStorage.setItem('items', JSON.stringify(items));
-                renderTable();
-                renderDiscrepancyReports();
-                showSyncStatus('✅ همه داده‌ها از شیت و حافظه پاک شدند.', 'success');
-            }
-        } else {
-            // اگر سرور نداریم، فقط محلی پاک کن
-            items = [];
-            localStorage.setItem('items', JSON.stringify(items));
-            renderTable();
-            renderDiscrepancyReports();
-            showSyncStatus('✅ همه داده‌ها از حافظه محلی پاک شدند.', 'success');
-        }
-    }
-
-    // ============ منطق اصلی جدول و نمایش ============
-    function renderTable() {
-      const tbody = document.getElementById('tableBody');
-      const filteredItems = items.filter(row =>
-        Object.keys(filters).every(key =>
-          String(row[key]).toLowerCase().includes(filters[key].toLowerCase())
-        )
-      ).filter(row =>
-        row[0] && (String(row[0]) + String(row[1]) + String(row[2]) + String(row[3]) + String(row[4]) + String(row[5]) + String(row[6]) + String(row[7]) + String(row[8]) + String(row[9]) + String(row[10]) + String(row[11]) + String(row[12])).toLowerCase().includes(document.getElementById('globalSearch').value.toLowerCase())
-      );
-
-      document.getElementById('totalCount').textContent = filteredItems.length;
-      tbody.innerHTML = '';
-
-      if (filteredItems.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;">موردی یافت نشد.</td></tr>';
-        return;
-      }
-
-      filteredItems.forEach((row, indexInFiltered) => {
-        // یافتن ایندکس اصلی در آرایه 'items' برای عملیات ویرایش
-        const originalIndex = items.findIndex(item => item[0] === row[0]);
-
-        const isDiscrepancy = parseFloat(row[3]) !== 0 || (row[4] !== 0 && parseFloat(row[5]) !== 0);
-        const rowClass = isDiscrepancy ? 'class="report-card"' : '';
-
-        const rowHtml = `
-          <tr ${rowClass}>
-            <td>${row[0] || '—'}</td>
-            <td>${row[1] || '—'}</td>
-            <td>${row[2] || 0}</td>
-            <td>${row[3] || 0}</td>
-            <td>${row[4] || 0}</td>
-            <td>${row[5] || 0}</td>
-            <td>${row[6] || '—'}</td>
-            <td>${row[7] || '—'}</td>
-            <td>${row[8] || '—'}</td>
-            <td>${row[9] || 0}</td>
-            <td>${row[10] || '—'}</td>
-            <td>${row[11] || '—'}</td>
-            <td>${row[12] || '—'}</td>
-            <td class="btn-group">
-              <button onclick="openEditModal(${originalIndex})" title="ویرایش">✏️</button>
-              <button onclick="confirmRemove(${originalIndex})" title="حذف" style="background:#f44336; color:white;">🗑️</button>
-              <button onclick="openCalc('editCount1', ${originalIndex})" title="محاسبه ۱" style="background:#ff9800;">🧮1</button>
-              <button onclick="openCalc('editCount2', ${originalIndex})" title="محاسبه ۲" style="background:#ff9800;">🧮2</button>
-            </td>
-          </tr>
-        `;
-        tbody.innerHTML += rowHtml;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+          if (btn.dataset.tab === 'reports') renderDiscrepancyReports();
+        });
       });
-    }
-    
-    function applyFilters() {
-        filters = {};
-        const filterInputs = document.querySelectorAll('#filterRow input');
-        filterInputs.forEach((input, index) => {
-            if (input.value) {
-                // ایندکس ستون‌ها در آرایه اصلی: 0 تا 12
-                filters[index] = input.value;
-            }
-        });
-        renderTable();
-    }
-    
-    function setupFilterRow() {
-        const filterRow = document.getElementById('filterRow');
-        filterRow.innerHTML = '';
-        // 13 ستون داده + 1 ستون عملیات (آخرین ستون عملیات است و فیلتر نمی‌شود)
-        for (let i = 0; i < 13; i++) { 
-            const th = document.createElement('th');
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.oninput = applyFilters;
-            input.style.padding = '3px';
-            input.style.fontSize = '11px';
-            th.appendChild(input);
-            filterRow.appendChild(th);
-        }
-    }
-    setupFilterRow();
 
-
-    // ============ عملیات افزودن ============
-    function openAddModal() {
-        if (!settings.teamName) {
-            return alert('لطفاً ابتدا نام تیم خود را در بخش تنظیمات وارد کنید.');
-        }
-        document.getElementById('addBarcode').value = '';
-        document.getElementById('addName').value = '';
-        document.getElementById('addStock').value = 0;
-        document.getElementById('addCount1').value = 0;
-        document.getElementById('addCount2').value = '';
-        document.getElementById('addTag').value = '';
-        document.getElementById('addTeam').value = settings.teamName;
-        document.getElementById('addLocation').value = settings.defaultLocation || '';
-        document.getElementById('addNotes').value = '';
-        
-        updateDiscrepancyAdd();
-        document.getElementById('addModal').classList.remove('hidden');
-        document.getElementById('addBarcode').focus();
-    }
-
-    function closeAddModal() {
-      document.getElementById('addModal').classList.add('hidden');
-    }
-
-    function updateDiscrepancyAdd() {
-        const stock = parseFloat(document.getElementById('addStock').value) || 0;
-        const c1 = parseFloat(document.getElementById('addCount1').value) || 0;
-        const c2Raw = document.getElementById('addCount2').value;
-        
-        const disc1 = (c1 - stock).toFixed(2);
-        const disc2 = calculateDiscrepancy2(stock, c2Raw, disc1);
-
-        document.getElementById('addDisc1').textContent = disc1;
-        document.getElementById('addDisc2').textContent = disc2;
-    }
-    
-    function calculateDiscrepancy2(stock, c2Raw, disc1Str) {
-        if (c2Raw === '') return '—';
-        const c2 = parseFloat(c2Raw) || 0;
-        return (c2 - stock).toFixed(2);
-    }
-
-    // **تغییر کلیدی: ارسال payload با action: 'save'**
-    async function saveAdd() {
-      const bc = document.getElementById('addBarcode').value.trim();
-      const name = document.getElementById('addName').value.trim();
-      const stock = parseFloat(document.getElementById('addStock').value) || 0;
-      const c1 = parseFloat(document.getElementById('addCount1').value) || 0;
-      const c2Raw = document.getElementById('addCount2').value;
-      const c2 = c2Raw !== '' ? parseFloat(c2Raw) || 0 : 0;
-      const disc1 = (c1 - stock).toFixed(2);
-      const disc2 = calculateDiscrepancy2(stock, c2Raw, disc1);
-
-      if (!bc || !name) return alert('بارکد و نام کالا الزامی است.');
-      if (bc.length < settings.minLength || bc.length > settings.maxLength) return alert(`طول بارکد باید بین ${settings.minLength} تا ${settings.maxLength} کاراکتر باشد.`);
-
-
-      const newRow = [
-        bc, name, c1, disc1, c2, disc2,
-        document.getElementById('addTag').value.trim(),
-        settings.teamName,
-        document.getElementById('addLocation').value.trim(),
-        stock,
-        document.getElementById('addNotes').value.trim(),
-        getNowFa(),
-        settings.userName
-      ];
-
-      // 1. ذخیره موقت (افزودن)
-      const tempItems = [...items, newRow];
-
-      // 2. ارسال به Google Sheets
-      if (settings.scriptUrl) {
-        const payload = {
-            action: 'save', // یا 'edit' اگر فرض کنیم بارکد قبلاً چک شده است. برای افزودن 'save' بهتر است.
-            items: tempItems
-        };
-        const saveResult = await saveToGoogleAppsScript(payload);
-
-        if (saveResult.success) {
-          items = tempItems;
-          localStorage.setItem('items', JSON.stringify(items));
-          renderTable();
-          renderDiscrepancyReports();
-          closeAddModal();
-          document.getElementById('searchInput').value = '';
-          document.getElementById('totalCount').textContent = items.length;
-        } 
-        // اگر ناموفق بود، در تابع saveToGoogleAppsScript پیام خطا داده می‌شود و آیتم‌ها برنمی‌گردند.
-      } else {
-        // اگر اسکریپت تنظیم نشده، فقط در localStorage ذخیره کن
-        items = tempItems;
-        localStorage.setItem('items', JSON.stringify(items));
-        renderTable();
-        renderDiscrepancyReports();
-        closeAddModal();
-        document.getElementById('searchInput').value = '';
-        document.getElementById('totalCount').textContent = items.length;
-        showSyncStatus('📱 داده در حافظه محلی ذخیره شد', 'info');
+      if (!settings.defaultLocation) {
+        settings.defaultLocation = 'انبار مرکزی';
+        localStorage.setItem('appSettings', JSON.stringify(settings));
       }
-    }
+      document.getElementById('settingUserName').value = settings.userName;
+      document.getElementById('settingTeamName').value = settings.teamName;
+      document.getElementById('settingDefaultLocation').value = settings.defaultLocation;
+      document.getElementById('settingMinLength').value = settings.minLength;
+      document.getElementById('settingMaxLength').value = settings.maxLength;
+      document.getElementById('searchByTag').checked = settings.searchByTag;
 
-    // ============ عملیات ویرایش ============
-    function openEditModal(index) {
-      if (index < 0 || index >= items.length) return;
-      currentEditIndex = index;
-      const row = items[index];
+      document.getElementById('searchByTag').addEventListener('change', function() {
+        settings.searchByTag = this.checked;
+        updateSearchUI();
+      });
 
-      document.getElementById('editBarcode').value = row[0] || '';
-      document.getElementById('editName').value = row[1] || '';
-      document.getElementById('editStock').value = row[9] || 0; // موجودی سیستمی
-      document.getElementById('editCount1').value = row[2] || 0;
-      document.getElementById('editCount2').value = row[4] || '';
-      document.getElementById('editTag').value = row[6] || '';
-      document.getElementById('editTeam').value = row[7] || settings.teamName;
-      document.getElementById('editLocation').value = row[8] || settings.defaultLocation || '';
-      document.getElementById('editNotes').value = row[10] || '';
-      
-      updateDiscrepancyEdit();
-      document.getElementById('editModal').classList.remove('hidden');
-      document.getElementById('editName').focus();
-    }
-
-    function closeEditModal() {
-      currentEditIndex = -1;
-      document.getElementById('editModal').classList.add('hidden');
-    }
-
-    function updateDiscrepancyEdit() {
-        const stock = parseFloat(document.getElementById('editStock').value) || 0;
-        const c1 = parseFloat(document.getElementById('editCount1').value) || 0;
-        const c2Raw = document.getElementById('editCount2').value;
-        
-        const disc1 = (c1 - stock).toFixed(2);
-        const disc2 = calculateDiscrepancy2(stock, c2Raw, disc1);
-
-        document.getElementById('editDisc1').textContent = disc1;
-        document.getElementById('editDisc2').textContent = disc2;
-    }
-
-    // **تغییر کلیدی: ارسال payload با action: 'edit'**
-    async function saveEdit() {
-      if (currentEditIndex < 0) return;
-
-      const originalRow = items[currentEditIndex];
-      const stock = parseFloat(document.getElementById('editStock').value) || 0;
-      const c1 = parseFloat(document.getElementById('editCount1').value) || 0;
-      const c2Raw = document.getElementById('editCount2').value;
-      const c2 = c2Raw !== '' ? parseFloat(c2Raw) || 0 : 0;
-      const disc1 = (c1 - stock).toFixed(2);
-      const disc2 = calculateDiscrepancy2(stock, c2Raw, disc1);
-
-      const updatedRow = [
-        originalRow[0], // بارکد (ثابت)
-        document.getElementById('editName').value.trim(),
-        c1,
-        disc1,
-        c2,
-        disc2,
-        document.getElementById('editTag').value.trim(),
-        settings.teamName,
-        document.getElementById('editLocation').value.trim(),
-        stock, // موجودی سیستمی (به‌روز شده توسط شمارش جدید)
-        document.getElementById('editNotes').value.trim(),
-        getNowFa(),
-        settings.userName
-      ];
-
-      // 1. ذخیره موقت در حافظه
-      const tempItems = [...items];
-      tempItems[currentEditIndex] = updatedRow;
-
-      // 2. ذخیره در Google Sheets اگر تنظیم شده
-      if (settings.scriptUrl) {
-        const payload = {
-            action: 'edit',
-            items: tempItems
-        };
-        const saveResult = await saveToGoogleAppsScript(payload);
-
-        if (saveResult.success) {
-          items = tempItems;
-          localStorage.setItem('items', JSON.stringify(items));
-          renderTable();
-          renderDiscrepancyReports();
-          closeEditModal();
-          document.getElementById('searchInput').value = '';
-        }
-      } else {
-        // اگر اسکریپت تنظیم نشده، فقط در localStorage ذخیره کن
-        items = tempItems;
-        localStorage.setItem('items', JSON.stringify(items));
-        renderTable();
-        renderDiscrepancyReports();
-        closeEditModal();
-        document.getElementById('searchInput').value = '';
-        showSyncStatus('📱 داده در حافظه محلی ذخیره شد', 'info');
-      }
-    }
-    
-    function confirmRemove(i) {
-        if (!confirm('آیا از حذف این کالا اطمینان دارید؟')) return;
-        removeItem(i);
-    }
-
-    // **تغییر کلیدی: ارسال payload با action: 'delete'**
-    async function removeItem(i) {
-      if (i < 0 || i >= items.length) return;
-      
-      const originalItems = [...items];
-      const deletedBarcode = originalItems[i][0];
-      
-      // 1. ساخت لیست جدید بدون آیتم حذف شده
-      const tempItems = originalItems.filter((_, index) => index !== i);
-
-      // 2. ذخیره در Google Sheets اگر تنظیم شده
-      if (settings.scriptUrl) {
-        const payload = {
-            action: 'delete',
-            items: tempItems
-        };
-        const saveResult = await saveToGoogleAppsScript(payload);
-
-        if (saveResult.success) {
-            items = tempItems;
-            localStorage.setItem('items', JSON.stringify(items));
-            renderTable();
-            renderDiscrepancyReports();
-            document.getElementById('totalCount').textContent = items.length;
-            showSyncStatus(`✅ کالای ${deletedBarcode} حذف و شیت به‌روز شد.`, 'success');
-        }
-      } else {
-        // اگر اسکریپت تنظیم نشده، فقط در localStorage ذخیره کن
-        items = tempItems;
-        localStorage.setItem('items', JSON.stringify(items));
-        renderTable();
-        renderDiscrepancyReports();
-        document.getElementById('totalCount').textContent = items.length;
-        showSyncStatus(`🗑️ کالای ${deletedBarcode} از حافظه محلی حذف شد.`, 'info');
-      }
-    }
-
-    // ============ عملیات گزارش‌گیری ============
-    function renderDiscrepancyReports() {
-        const reportBody = document.getElementById('discrepancyReportBody');
-        const reportCard = document.getElementById('reportCard');
-        
-        const discrepancies = items.filter(row => {
-            const c1 = parseFloat(row[2]) || 0;
-            const c2Raw = String(row[4]);
-            const c2 = c2Raw === '' ? 0 : (parseFloat(c2Raw) || 0);
-            const stock = parseFloat(row[9]) || 0;
-            
-            const disc1 = (c1 - stock).toFixed(2);
-            const disc2 = calculateDiscrepancy2(stock, c2Raw, disc1);
-
-            return parseFloat(disc1) !== 0 || parseFloat(disc2) !== 0;
-        });
-        
-        if (discrepancies.length === 0) {
-            reportBody.innerHTML = '<p style="text-align:center; color:#2e7d32;">🎉 تبریک! هیچ مغایرت شمارشی یافت نشد.</p>';
-            reportCard.style.display = 'block';
-            renderTable(); // بازگشت به حالت عادی
-            return;
-        }
-
-        let html = '<table class="table">';
-        html += '<thead><tr><th>بارکد</th><th>نام کالا</th><th>موجودی</th><th>شمارش ۱</th><th>مغایرت ۱</th><th>شمارش ۲</th><th>مغایرت ۲</th><th>محل</th><th>کاربر</th></tr></thead><tbody>';
-
-        discrepancies.forEach(row => {
-            const c1 = parseFloat(row[2]) || 0;
-            const c2Raw = String(row[4]);
-            const c2 = c2Raw === '' ? 0 : (parseFloat(c2Raw) || 0);
-            const stock = parseFloat(row[9]) || 0;
-            const disc1 = (c1 - stock).toFixed(2);
-            const disc2 = calculateDiscrepancy2(stock, c2Raw, disc1);
-
-            html += `
-                <tr>
-                    <td>${row[0] || '—'}</td>
-                    <td>${row[1] || '—'}</td>
-                    <td>${stock}</td>
-                    <td>${c1}</td>
-                    <td style="font-weight:bold; color:${parseFloat(disc1) !== 0 ? '#c62828' : '#2e7d32'};">${disc1}</td>
-                    <td>${c2}</td>
-                    <td style="font-weight:bold; color:${parseFloat(disc2) !== 0 ? '#c62828' : '#2e7d32'};">${disc2}</td>
-                    <td>${row[8] || '—'}</td>
-                    <td>${row[12] || '—'}</td>
-                </tr>
-            `;
-        });
-        
-        html += '</tbody></table>';
-        reportBody.innerHTML = html;
-        
-        // نمایش کارت گزارش و مخفی کردن کارت جدول اصلی
-        document.getElementById('mainTableCard').style.display = 'none';
-        reportCard.style.display = 'block';
-    }
-
-    // ============ تنظیمات ============
-    function openSettingsModal() {
-        document.getElementById('settingUserName').value = settings.userName;
-        document.getElementById('settingTeamName').value = settings.teamName || '';
-        document.getElementById('settingDefaultLocation').value = settings.defaultLocation;
-        document.getElementById('settingMinLength').value = settings.minLength;
-        document.getElementById('settingMaxLength').value = settings.maxLength;
-        document.getElementById('settingSearchByTag').checked = settings.searchByTag;
-        document.getElementById('scriptUrl').value = settings.scriptUrl;
-
-        document.getElementById('settingsModal').classList.remove('hidden');
-    }
-
-    function saveSettings() {
-      const user = document.getElementById('settingUserName').value.trim();
-      const team = document.getElementById('settingTeamName').value.trim();
-      const loc = document.getElementById('settingDefaultLocation').value.trim();
-      const min = parseInt(document.getElementById('settingMinLength').value) || 10;
-      const max = parseInt(document.getElementById('settingMaxLength').value) || 20;
-      const searchByTag = document.getElementById('settingSearchByTag').checked;
-      const scriptUrl = document.getElementById('scriptUrl').value.trim();
-
-      if (min <= 0 || max <= 0) return alert('طول‌ها باید مثبت باشند.');
-      if (min > max) return alert('⚠️ حداقل نباید بیشتر از حداکثر باشد.');
-
-      settings = {
-        userName: user,
-        teamName: team,
-        defaultLocation: loc,
-        minLength: min,
-        maxLength: max,
-        searchByTag,
-        scriptUrl
-      };
-
-      localStorage.setItem('appSettings', JSON.stringify(settings));
-      document.getElementById('globalLocationDisplay').textContent = loc || 'تعیین نشده';
-      document.getElementById('addTeam').value = team; // به‌روز رسانی در مودال افزودن
-      settings.userName = user; // به‌روز رسانی نام کاربر
-      settings.teamName = team; // به‌روز رسانی نام تیم
-      
+      document.getElementById('globalLocationDisplay').textContent = settings.defaultLocation;
       updateSearchUI();
-      alert('✅ تنظیمات ذخیره شد.');
-      document.getElementById('settingsModal').classList.add('hidden');
-    }
+      renderTable();
+      renderFilterRow();
+      renderDiscrepancyReports();
+
+      ['addCount1','addCount2','editCount1','editCount2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          const wrap = document.createElement('div');
+          wrap.style.position = 'relative';
+          el.parentNode.insertBefore(wrap, el);
+          wrap.appendChild(el);
+          const btn = document.createElement('button');
+          btn.innerHTML = '🧮';
+          btn.style.cssText = 
+            'position:absolute;left:12px;top:50%;transform:translateY(-50%);' +
+            'background:#e0e0e0;border:none;width:40px;height:40px;' +
+            'border-radius:10px;cursor:pointer;font-size:20px;font-weight:bold;';
+          btn.onclick = () => openCalc(id);
+          wrap.appendChild(btn);
+          el.style.paddingLeft = '60px';
+        }
+      });
+
+      const params = new URLSearchParams(window.location.search);
+      const bc = params.get('SCAN_RESULT')?.trim() || params.get('barcode')?.trim();
+      if (bc && !settings.searchByTag) {
+        document.getElementById('searchInput').value = bc;
+        setTimeout(searchOrAdd, 150);
+      }
+    });
 
     function updateSearchUI() {
       const searchByTag = settings.searchByTag;
@@ -1009,26 +523,537 @@ print("File saved to [/mnt/data/inventory_export.xlsx"](https://storage.gapgpt.a
       }
     }
 
-    // ============ ماشین حساب ============
-    function openCalc(id, index) {
-        if (index !== undefined) {
-            // اگر از داخل جدول فراخوانی شده
-            CURRENT_CALC_TARGET = `editCount${id.includes('1') ? 1 : 2}`;
-            const row = items[index];
-            document.getElementById('calcDisplay').value = String(row[id.includes('1') ? 2 : 4] || '');
-            currentEditIndex = index; // برای اعمال مستقیم در زمان محاسبه
-        } else {
-            // اگر از جای دیگر فراخوانی شده
-            CURRENT_CALC_TARGET = id;
-            document.getElementById('calcDisplay').value = '';
+    function renderDiscrepancyReports() {
+      const disc1List = document.getElementById('discrepancy1List');
+      const disc2List = document.getElementById('discrepancy2List');
+      const disc1Items = items.filter(r => Math.abs(parseFloat(r[3])) > 0.001);
+      const disc2Items = items.filter(r => Math.abs(parseFloat(r[5])) > 0.001);
+      const bcLocCount = {};
+      const tagLocCount = {};
+      items.forEach(r => {
+        const bcLoc = `${r[0]}|${r[8]}`;
+        const tagLoc = `${r[6]}|${r[8]}`;
+        bcLocCount[bcLoc] = (bcLocCount[bcLoc] || 0) + 1;
+        tagLocCount[tagLoc] = (tagLocCount[tagLoc] || 0) + 1;
+      });
+
+      function buildDiscrepancyTable(data) {
+        if (data.length === 0) return '<p style="text-align:center; color:#666;">موردی یافت نشد.</p>';
+        return `
+          <table class="table" style="font-size:12px;">
+            <thead><tr><th>بارکد</th><th>نام</th><th>موجودی</th><th>شمارش</th><th>مغایرت</th><th>تگ</th><th>محل</th></tr></thead>
+            <tbody>
+              ${data.map(r => {
+                const bcLoc = `${r[0]}|${r[8]}`;
+                const tagLoc = `${r[6]}|${r[8]}`;
+                const isDup = bcLocCount[bcLoc] > 1 || tagLocCount[tagLoc] > 1;
+                const dupClass = isDup ? ' class="duplicate"' : '';
+                return `<tr${dupClass}>
+                  <td${dupClass}>${r[0]}</td>
+                  <td${dupClass}>${r[1]}</td>
+                  <td>${r[9]}</td>
+                  <td>${r[2] || r[4]}</td>
+                  <td class="discrepancy">${r[3] || r[5]}</td>
+                  <td${dupClass}>${r[6]}</td>
+                  <td${dupClass}>${r[8]}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+      disc1List.innerHTML = buildDiscrepancyTable(disc1Items);
+      disc2List.innerHTML = buildDiscrepancyTable(disc2Items);
+    }
+
+    function exportDiscrepancies() {
+      const disc1 = items.filter(r => Math.abs(parseFloat(r[3])) > 0.001);
+      const disc2 = items.filter(r => Math.abs(parseFloat(r[5])) > 0.001);
+      const wsData = [
+        ['--- مغایرت‌های شمارش ۱ ---'],
+        ['بارکد','نام کالا','موجودی','شمارش۱','مغایرت۱','تگ','محل'],
+        ...disc1.map(r => [r[0], r[1], r[9], r[2], r[3], r[6], r[8]]),
+        [],
+        ['--- مغایرت‌های شمارش ۲ ---'],
+        ['بارکد','نام کالا','موجودی','شمارش۲','مغایرت۲','تگ','محل'],
+        ...disc2.map(r => [r[0], r[1], r[9], r[4], r[5], r[6], r[8]])
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'مغایرت‌ها');
+      XLSX.writeFile(wb, 'مغایرت‌های_انبارگردانی.xlsx');
+    }
+
+    function saveSettings() {
+      const user = document.getElementById('settingUserName').value.trim() || 'کاربر';
+      const team = document.getElementById('settingTeamName').value.trim();
+      let loc = document.getElementById('settingDefaultLocation').value.trim();
+      if (!loc) loc = 'انبار مرکزی';
+      const min = parseInt(document.getElementById('settingMinLength').value) || 14;
+      const max = parseInt(document.getElementById('settingMaxLength').value) || 20;
+      const searchByTag = document.getElementById('searchByTag').checked;
+      if (min > max) return alert('⚠️ حداقل نباید بیشتر از حداکثر باشد.');
+      settings = { userName: user, teamName: team, defaultLocation: loc, minLength: min, maxLength: max, searchByTag };
+      localStorage.setItem('appSettings', JSON.stringify(settings));
+      document.getElementById('globalLocationDisplay').textContent = loc;
+      updateSearchUI();
+      alert('✅ تنظیمات ذخیره شد.');
+    }
+
+    function renderTable() {
+      document.getElementById('totalCount').textContent = items.length;
+      items.sort((a, b) => parseFaDateTime(b[11]) - parseFaDateTime(a[11]));
+      applyFilters();
+    }
+
+    function parseFaDateTime(faStr) {
+      if (!faStr) return 0;
+      const parts = faStr.split(' ');
+      if (parts.length < 2) return Date.now();
+      const time = parts[1];
+      const [h, m, s] = time.split(':').map(x => parseInt(x) || 0);
+      const d = new Date();
+      d.setHours(h, m, s, 0);
+      return d.getTime();
+    }
+
+    async function applyZoom(level) {
+      zoomLevel = Math.max(1.0, Math.min(3.0, level));
+      document.getElementById('hintZoom').textContent = `🔍 زوم: ×${zoomLevel.toFixed(1)}`;
+      if (!videoStream) return;
+      const track = videoStream.getVideoTracks()[0];
+      if (track && track.applyConstraints) {
+        try { await track.applyConstraints({ advanced: [{ zoom: zoomLevel }] }); } catch (e) {}
+      }
+    }
+    function zoomIn() { applyZoom(zoomLevel + 0.3); }
+    function zoomOut() { applyZoom(zoomLevel - 0.3); }
+    function resetZoom() { applyZoom(1.0); }
+
+    const SCANNERS = [
+      { id: 'camera', name: '📸 اسکن با دوربین داخلی' },
+      { id: 'gamma', name: 'Gamma Barcode Scanner',
+        intent: 'intent://scan/#Intent;scheme=scan;package=com.gamma.scan;end;' },
+      { id: 'zxing', name: 'ZXing Barcode Scanner',
+        intent: 'intent://scan/#Intent;scheme=zxing;package=com.google.zxing.client.android;end;' },
+      { id: 'easy', name: 'Easy Barcode Scanner',
+        intent: 'intent://scan/#Intent;scheme=scan;package=com.tecace.easybarcodescanner;end;' }
+    ];
+
+    function changeScanner() {
+      let msg = 'روش اسکن را انتخاب کنید:\n';
+      SCANNERS.forEach((s, i) => msg += `${i+1}. ${s.name}\n`);
+      msg += '\nشماره را وارد کنید (پیش‌فرض: 1):';
+      const choice = prompt(msg, '1');
+      const idx = Math.max(0, parseInt(choice) - 1);
+      const sel = SCANNERS[idx] || SCANNERS[0];
+      LAST_SCAN_METHOD = sel.id;
+      localStorage.setItem('scanner', sel.id);
+      alert(`✅ اسکنر: ${sel.name}`);
+    }
+
+    function launchExternalScanner(id) {
+      const s = SCANNERS.find(x => x.id === id);
+      if (s && s.intent) {
+        const w = window.open(s.intent, '_self');
+        if (!w) alert(`❌ «${s.name}» نصب نیست. از اسکن داخلی استفاده کنید.`);
+      }
+    }
+
+    function startScan() {
+      if (settings.searchByTag) {
+        alert('⚠️ در حالت جستجو بر اساس تگ، اسکن بارکد غیرفعال است.');
+        return;
+      }
+      if (LAST_SCAN_METHOD === 'camera') {
+        startCameraScan();
+      } else {
+        launchExternalScanner(LAST_SCAN_METHOD);
+      }
+    }
+
+    async function startCameraScan() {
+      if (!("BarcodeDetector" in window)) {
+        alert("❌ مرورگر از اسکن پشتیبانی نمی‌کند. از Chrome استفاده کنید.");
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
+        });
+        videoStream = stream;
+        const video = document.getElementById('cameraVideo');
+        video.srcObject = stream;
+        barcodeDetector = new BarcodeDetector({ formats: ['qr_code','ean_13','code_128','code_39'] });
+        document.getElementById('cameraModal').classList.remove('hidden');
+        video.play();
+        applyZoom(1.0);
+        scanInterval = setInterval(async () => {
+          if (!barcodeDetector || !video.srcObject || video.paused) return;
+          try {
+            const barcodes = await barcodeDetector.detect(video);
+            if (barcodes.length === 0) {
+              stableScanCount = 0;
+              return;
+            }
+            const b = barcodes[0];
+            const value = (b.rawValue || '').trim();
+            if (!value || value.length < settings.minLength || value.length > settings.maxLength) {
+              stableScanCount = 0;
+              return;
+            }
+
+            const vw = video.videoWidth;
+            const vh = video.videoHeight;
+            const box = b.boundingBox || {};
+            const x = box.x || 0, y = box.y || 0, w = box.width || 0, h = box.height || 0;
+
+            // ✅ شرایط دقیق‌تر اسکن:
+            const centerX = x + w/2;
+            const centerY = y + h/2;
+            const inVerticalZone = centerY > vh * 0.3 && centerY < vh * 0.7; // فقط نوار عمودی مرکزی
+            const inHorizontalZone = Math.abs(centerX - vw/2) < vw * 0.2;  // ±20% افقی
+            const minWidth = vw * 0.2;
+
+            if (!inVerticalZone || !inHorizontalZone || w < minWidth) {
+              stableScanCount = 0;
+              return;
+            }
+
+            if (value === lastScannedValue) {
+              stableScanCount++;
+            } else {
+              lastScannedValue = value;
+              stableScanCount = 1;
+            }
+
+            if (stableScanCount >= 2) { // ≥2 فریم پشت‌سرهم
+              clearInterval(scanInterval);
+              scanInterval = null;
+              stopCamera();
+              document.getElementById('searchInput').value = value;
+              setTimeout(searchOrAdd, 150);
+            }
+          } catch (e) {}
+        }, 200); // افزایش فریم‌ریت برای پاسخ سریع‌تر
+      } catch (err) {
+        alert("❌ دسترسی به دوربین رد شد.");
+      }
+    }
+
+    function stopCamera() {
+      const modal = document.getElementById('cameraModal');
+      modal.classList.add('hidden');
+      if (scanInterval) clearInterval(scanInterval);
+      if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+      videoStream = null;
+      barcodeDetector = null;
+      const v = document.getElementById('cameraVideo');
+      if (v.srcObject) v.srcObject.getTracks().forEach(t => t.stop());
+      v.srcObject = null;
+      lastScannedValue = '';
+      stableScanCount = 0;
+    }
+
+    function loadExcel() {
+      const file = document.getElementById('excelFile').files[0];
+      if (!file) return alert('فایلی انتخاب نشده است.');
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const wb = XLSX.read(data, { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
+          if (json.length < 2) return alert('فایل خالی است.');
+          items = [];
+          for (let i = 1; i < json.length; i++) {
+            const row = json[i];
+            const bc = String(row[0] || '').trim();
+            if (!bc) continue;
+            const stock = parseFloat(row[9]) || 0;
+            const c1 = parseFloat(row[2]) || 0;
+            const c2 = parseFloat(row[4]) || 0;
+            const disc1 = (c1 - stock).toFixed(2);
+            const disc2 = (c2 - stock).toFixed(2);
+     items.push([
+  bc,
+  row[1] || '',
+  c1,
+  disc1,
+  c2,
+  disc2,
+  row[6] || '',
+  row[7] || '',       // ✅ تیم فقط از اکسل — بدون fallback
+  row[8] || '',       // ✅ محل فقط از اکسل
+  stock,
+  row[10] || '',
+  getNowFa(),         // ⏱️ زمان import بروز است
+  row[12] || ''       // ✅ کاربر فقط از اکسل — بدون fallback به تنظیمات
+]);
+          }
+          localStorage.setItem('items', JSON.stringify(items));
+          renderTable();
+          renderDiscrepancyReports();
+          alert(`✅ ${items.length} مورد import شد.`);
+        } catch (err) {
+          alert('خطا در import: ' + (err.message || 'نامشخص'));
         }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function exportExcel() {
+      if (items.length === 0) return alert('داده‌ای برای خروجی وجود ندارد.');
+      const headers = ['بارکد','نام کالا','شمارش۱','مغایرت۱','شمارش۲','مغایرت۲','تگ','تیم','محل','موجودی','توضیحات','آخرین بروزرسانی','کاربر'];
+      const wsData = [headers, ...items.map(r => r.slice(0,13))];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'انبار');
+      XLSX.writeFile(wb, 'انبارگردانی_خروجی.xlsx');
+    }
+
+    function clearAll() {
+      if (confirm('⚠️ تمام داده‌ها برای همیشه پاک شوند؟')) {
+        items = [];
+        localStorage.setItem('items', JSON.stringify(items));
+        renderTable();
+        renderDiscrepancyReports();
+      }
+    }
+
+    // ✅ تغییر اصلی: جلوگیری از افزودن در حالت searchByTag
+    function searchOrAdd() {
+      const query = document.getElementById('searchInput').value.trim();
+      const loc = settings.defaultLocation;
+      if (!query) return alert('لطفاً مقدار را وارد کنید.');
       
-        document.getElementById('calcModal').classList.remove('hidden');
+      if (settings.searchByTag) {
+        const idx = items.findIndex(r => r[6] === query && r[8] === loc);
+        if (idx !== -1) {
+          openEditModal(idx);
+        } else {
+          // ❌ بدون افزودن جدید — فقط ویرایش مجاز است
+          alert('⚠️ در حالت «جستجو بر اساس تگ»، افزودن کالای جدید غیرفعال است. کالایی با این تگ یافت نشد.');
+          return;
+        }
+      } else {
+        if (query.length < settings.minLength || query.length > settings.maxLength) {
+          alert(`❌ طول بارکد (${query.length}) خارج از محدوده (${settings.minLength}–${settings.maxLength}) است.`);
+          return;
+        }
+        const idx = items.findIndex(r => r[0] === query && r[8] === loc);
+        if (idx !== -1) openEditModal(idx);
+        else openAddModal(query, loc);
+      }
+    }
+
+    function openAddModal(bc, loc, tag = '') {
+      const existing = items.find(r => r[0] === bc);
+      const stock = existing ? parseFloat(existing[9]) || 0 : 0;
+      document.getElementById('addBarcode').value = bc;
+      document.getElementById('addLocation').value = loc;
+      document.getElementById('addStock').value = stock;
+      document.getElementById('addCount1').value = stock;
+      document.getElementById('addCount2').value = '';
+      document.getElementById('addTag').value = tag;
+      document.getElementById('addTeam').value = settings.teamName;
+      document.getElementById('addNotes').value = '';
+      updateDiscrepancyAdd();
+      document.getElementById('addModal').classList.remove('hidden');
+    }
+
+    function saveAdd() {
+      const bc = document.getElementById('addBarcode').value.trim();
+      const name = document.getElementById('addName').value.trim();
+      const stock = parseFloat(document.getElementById('addStock').value) || 0;
+      const c1 = parseFloat(document.getElementById('addCount1').value) || 0;
+      const c2Raw = document.getElementById('addCount2').value;
+      const c2 = c2Raw !== '' ? parseFloat(c2Raw) || 0 : 0;
+      const disc1 = (c1 - stock).toFixed(2);
+      const disc2 = calculateDiscrepancy2(stock, c2Raw, disc1);
+      const newRow = [
+        bc, name, c1, disc1, c2, disc2,
+        document.getElementById('addTag').value.trim(),
+        settings.teamName,
+        document.getElementById('addLocation').value.trim(),
+        stock,
+        document.getElementById('addNotes').value.trim(),
+        getNowFa(),
+        settings.userName
+      ];
+      items.push(newRow);
+      localStorage.setItem('items', JSON.stringify(items));
+      renderTable();
+      renderDiscrepancyReports();
+      closeAddModal();
+      document.getElementById('searchInput').value = '';
+    }
+
+    function openEditModal(idx) {
+      currentEditIndex = idx;
+      const r = items[idx];
+      document.getElementById('editBarcode').value = r[0];
+      document.getElementById('editName').value = r[1] || '';
+      document.getElementById('editStock').value = r[9] || 0;
+      document.getElementById('editCount1').value = r[2] || '';
+      document.getElementById('editCount2').value = r[4] != null ? r[4] : '';
+      document.getElementById('editTag').value = r[6] || '';
+      document.getElementById('editTeam').value = settings.teamName;
+      document.getElementById('editLocation').value = r[8] || '';
+      document.getElementById('editNotes').value = r[10] || '';
+      updateDiscrepancyEdit();
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    function saveEdit() {
+      if (currentEditIndex < 0) return;
+      const r = [...items[currentEditIndex]];
+      const stock = parseFloat(document.getElementById('editStock').value) || 0;
+      const c1 = parseFloat(document.getElementById('editCount1').value) || 0;
+      const c2Raw = document.getElementById('editCount2').value;
+      const c2 = c2Raw !== '' ? parseFloat(c2Raw) || 0 : 0;
+      r[1] = document.getElementById('editName').value.trim();
+      r[2] = c1;
+      r[4] = c2;
+      r[6] = document.getElementById('editTag').value.trim();
+      r[7] = settings.teamName;
+      r[8] = document.getElementById('editLocation').value.trim();
+      r[10] = document.getElementById('editNotes').value.trim();
+      r[9] = stock;
+      r[11] = getNowFa();
+      r[12] = settings.userName;
+      r[3] = (c1 - stock).toFixed(2);
+      r[5] = calculateDiscrepancy2(stock, c2Raw, r[3]);
+      items[currentEditIndex] = r;
+      localStorage.setItem('items', JSON.stringify(items));
+      renderTable();
+      renderDiscrepancyReports();
+      closeEditModal();
+      document.getElementById('searchInput').value = '';
+    }
+
+    function getNowFa() {
+      return new Intl.DateTimeFormat('fa-IR', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      }).format(new Date()).replace(/،/g, ' ');
+    }
+
+    // ✅ فیلتر جداگانه در هر ستون
+    function applyFilters() {
+      const global = document.getElementById('globalSearch').value.toLowerCase();
+      const colFilters = Array.from(document.querySelectorAll('.filter-input')).map(el => el.value.toLowerCase());
+
+      const filtered = items.filter(row => {
+        const matchesGlobal = !global || row.some(cell => String(cell).toLowerCase().includes(global));
+        const matchesCols = colFilters.every((f, i) => {
+          if (!f) return true;
+          const cell = row[i] != null ? String(row[i]).toLowerCase() : '';
+          return cell.includes(f);
+        });
+        return matchesGlobal && matchesCols;
+      });
+
+      renderTableBody(filtered);
+    }
+
+    function renderTableBody(data) {
+      const t = document.getElementById('tableBody');
+      if (data.length === 0) {
+        t.innerHTML = '<tr><td colspan="14" style="text-align:center;">داده‌ای یافت نشد.</td></tr>';
+        return;
+      }
+      const bcLocCount = {};
+      const tagLocCount = {};
+      data.forEach(r => {
+        const bcLoc = `${r[0]}|${r[8]}`;
+        const tagLoc = `${r[6]}|${r[8]}`;
+        bcLocCount[bcLoc] = (bcLocCount[bcLoc] || 0) + 1;
+        tagLocCount[tagLoc] = (tagLocCount[tagLoc] || 0) + 1;
+      });
+      t.innerHTML = data.map((r, i) => {
+        const bcLoc = `${r[0]}|${r[8]}`;
+        const tagLoc = `${r[6]}|${r[8]}`;
+        const isDup = bcLocCount[bcLoc] > 1 || tagLocCount[tagLoc] > 1;
+        const dupClass = isDup ? ' class="duplicate"' : '';
+        const idx = items.findIndex(x => x[0]===r[0] && x[8]===r[8] && x[6]===r[6]);
+        return `<tr>
+          <td${dupClass}>${r[0]}</td>
+          <td${dupClass}>${r[1]}</td>
+          <td>${r[2]}</td>
+          <td class="discrepancy">${r[3]}</td>
+          <td>${r[4]}</td>
+          <td class="discrepancy">${r[5]}</td>
+          <td${dupClass}>${r[6]}</td>
+          <td>${r[7]}</td>
+          <td${dupClass}>${r[8]}</td>
+          <td>${parseFloat(r[9]).toLocaleString('fa-IR')}</td>
+          <td>${r[10]}</td>
+          <td>${r[11]}</td>
+          <td>${r[12]}</td>
+          <td class="actions">
+            <button class="btn-icon" style="background:#1976d2;" onclick="openEditModal(${idx})">✏️</button>
+            <button class="btn-icon danger" onclick="removeItem(${idx})">🗑️</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderFilterRow() {
+      const headers = Array(13).fill('').map((_,i) => 
+        `<th><input type="text" class="filter-input" data-col="${i}" placeholder="فیلتر..." oninput="applyFilters()"></th>`
+      );
+      document.getElementById('filterRow').innerHTML = headers.join('') + '<th></th>';
+    }
+
+    function removeItem(i) {
+      if (confirm('این ردیف حذف شود؟')) {
+        items.splice(i, 1);
+        localStorage.setItem('items', JSON.stringify(items));
+        renderTable();
+        renderDiscrepancyReports();
+      }
+    }
+
+    function calculateDiscrepancy2(stock, count2Str, discrepancy1) {
+      if (parseFloat(discrepancy1) === 0) {
+        const c2 = count2Str !== '' ? parseFloat(count2Str) : null;
+        if (c2 === null || c2 === 0) return "0.00";
+      }
+      const c2 = count2Str !== '' ? parseFloat(count2Str) || 0 : 0;
+      return (c2 - stock).toFixed(2);
+    }
+
+    function updateDiscrepancyAdd() {
+      const stock = parseFloat(document.getElementById('addStock').value) || 0;
+      const c1 = parseFloat(document.getElementById('addCount1').value) || 0;
+      const c2 = document.getElementById('addCount2').value;
+      const disc1 = (c1 - stock).toFixed(2);
+      document.getElementById('addDisc1').textContent = disc1;
+      const disc2 = calculateDiscrepancy2(stock, c2, disc1);
+      document.getElementById('addDisc2').textContent = disc2;
+    }
+
+    function updateDiscrepancyEdit() {
+      const stock = parseFloat(document.getElementById('editStock').value) || 0;
+      const c1 = parseFloat(document.getElementById('editCount1').value) || 0;
+      const c2 = document.getElementById('editCount2').value;
+      const disc1 = (c1 - stock).toFixed(2);
+      document.getElementById('editDisc1').textContent = disc1;
+      const disc2 = calculateDiscrepancy2(stock, c2, disc1);
+      document.getElementById('editDisc2').textContent = disc2;
+    }
+
+    let CURRENT_CALC_TARGET = null;
+    function openCalc(id) { 
+      CURRENT_CALC_TARGET = id; 
+      document.getElementById('calcDisplay').value = ''; 
+      document.getElementById('calcModal').classList.remove('hidden'); 
     }
     function calcAppend(c) { document.getElementById('calcDisplay').value += c; }
     function calcBackspace() { const e = document.getElementById('calcDisplay'); e.value = e.value.slice(0, -1); }
     function calcClear() { document.getElementById('calcDisplay').value = ''; }
-    
     function calcApply() {
       const expr = document.getElementById('calcDisplay').value;
       if (!expr.trim()) return alert('عبارتی وارد نشده است.');
@@ -1036,36 +1061,18 @@ print("File saved to [/mnt/data/inventory_export.xlsx"](https://storage.gapgpt.a
       try {
         const r = new Function('return (' + safe + ')')();
         if (isNaN(r) || !isFinite(r)) throw '';
-        const result = parseFloat(r).toFixed(2);
-
-        if (currentEditIndex !== null && currentEditIndex >= 0) {
-            // اعمال مستقیم در حالت ویرایش
-            const targetInput = document.getElementById(CURRENT_CALC_TARGET);
-            if (targetInput) {
-                targetInput.value = result;
-                if (CURRENT_CALC_TARGET.startsWith('add')) updateDiscrepancyAdd();
-                else if (CURRENT_CALC_TARGET.startsWith('edit')) updateDiscrepancyEdit();
-            }
-        } else {
-            // اعمال در فیلد هدف اصلی (برای افزودن یا فیلدهای دیگر)
-            const t = document.getElementById(CURRENT_CALC_TARGET);
-            if (t) {
-                t.value = result;
-                if (CURRENT_CALC_TARGET.startsWith('add')) updateDiscrepancyAdd();
-                else if (CURRENT_CALC_TARGET.startsWith('edit')) updateDiscrepancyEdit();
-            }
-        }
-
+        const t = document.getElementById(CURRENT_CALC_TARGET);
+        t.value = parseFloat(r).toFixed(2);
+        if (CURRENT_CALC_TARGET.startsWith('add')) updateDiscrepancyAdd();
+        else if (CURRENT_CALC_TARGET.startsWith('edit')) updateDiscrepancyEdit();
         closeCalcModal();
       } catch (e) { alert('عبارت ریاضی نامعتبر است.'); }
     }
-    function closeCalcModal() {
-      document.getElementById('calcModal').classList.add('hidden');
-      CURRENT_CALC_TARGET = null;
-      currentEditIndex = -1;
+    function closeCalcModal() { 
+      document.getElementById('calcModal').classList.add('hidden'); 
+      CURRENT_CALC_TARGET = null; 
     }
 
-    // ============ توابع موقعیت ============
     function getLocations() {
       const set = new Set();
       items.forEach(r => { const loc = (r[8] || '').trim(); if (loc) set.add(loc); });
@@ -1076,7 +1083,7 @@ print("File saved to [/mnt/data/inventory_export.xlsx"](https://storage.gapgpt.a
     function renderDropdown(id, locations) {
       const el = document.getElementById(id);
       if (!el) return;
-      el.innerHTML = locations.length
+      el.innerHTML = locations.length 
         ? locations.map(l => `<div class="custom-select-option" onclick="selectLocation('${l.replace(/'/g,"\\'")}','${id}')">${l}</div>`).join('')
         : '<div class="custom-select-option" style="color:#999;">محلی وجود ندارد</div>';
     }
@@ -1094,14 +1101,17 @@ print("File saved to [/mnt/data/inventory_export.xlsx"](https://storage.gapgpt.a
       const { dropdown, input } = conf;
       const el = document.getElementById(dropdown);
       const inp = document.getElementById(input);
-      
       if (el && el.classList.contains('hidden')) {
         renderDropdown(dropdown, getLocations());
         el.classList.remove('hidden');
         currentDropdown = context;
-        if (inp) {
-            inp.focus();
+        if (inp && !inp.hasBlurListener) {
+          inp.addEventListener('blur', function() {
+            setTimeout(hideAllDropdowns, 150);
+          });
+          inp.hasBlurListener = true;
         }
+        inp.focus();
       }
     }
 
@@ -1122,352 +1132,16 @@ print("File saved to [/mnt/data/inventory_export.xlsx"](https://storage.gapgpt.a
       const inputId = map[dropdownId] || dropdownId.replace('Dropdown', '');
       document.getElementById(inputId).value = loc;
       hideAllDropdowns();
-      if (dropdownId === 'locationDropdown') {
-          settings.defaultLocation = loc;
-          document.getElementById('globalLocationDisplay').textContent = loc;
-      }
-    }
-    
-    // مدیریت کلیک خارج از دراپ‌داون
-    document.addEventListener('click', function(event) {
-        if (!event.target.closest('.custom-select-container')) {
-            hideAllDropdowns();
-        }
-    });
-
-
-    // ============ توابع اسکنر ============
-    const SCANNERS = [
-      { id: 'camera', name: '📸 اسکن با دوربین داخلی' },
-      { id: 'gamma', name: 'Gamma Barcode Scanner',
-        intent: 'intent://scan/#Intent;scheme=scan;package=com.gamma.scan;end;' },
-      { id: 'zxing', name: 'ZXing Barcode Scanner',
-        intent: 'intent://scan/#Intent;scheme=zxing;package=com.google.zxing.client.android;end;' },
-      { id: 'easy', name: 'Easy Barcode Scanner',
-        intent: 'intent://scan/#Intent;scheme=scan;package=com.tecace.easybarcodescanner;end;' }
-    ];
-
-    function openScanner() {
-        document.getElementById('cameraModal').classList.remove('hidden');
-        startCamera();
     }
 
-    function stopCamera() {
-        if (videoStream) {
-            videoStream.getTracks().forEach(track => track.stop());
-            videoStream = null;
-        }
-        if (scanInterval) {
-            clearInterval(scanInterval);
-            scanInterval = null;
-        }
-        if (barcodeDetector) {
-            barcodeDetector.close();
-            barcodeDetector = null;
-        }
-        document.getElementById('cameraVideo').srcObject = null;
-        document.getElementById('cameraModal').classList.add('hidden');
-        resetZoom();
-        lastScannedValue = '';
-        stableScanCount = 0;
+    function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
+    function closeEditModal() { 
+      document.getElementById('editModal').classList.add('hidden');
+      currentEditIndex = -1; 
     }
 
-    async function startCamera() {
-        if (!('mediaDevices' in navigator) || !('BarcodeDetector' in window)) {
-            alert('دوربین یا قابلیت تشخیص بارکد در این مرورگر پشتیبانی نمی‌شود.');
-            stopCamera();
-            return;
-        }
-
-        try {
-            videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            const videoElement = document.getElementById('cameraVideo');
-            videoElement.srcObject = videoStream;
-            videoElement.setAttribute('playsinline', true);
-            await videoElement.play();
-            
-            barcodeDetector = new BarcodeDetector({ formats: ['CODE_128', 'EAN_13', 'QR_CODE'] });
-            scanInterval = setInterval(scanVideoFrame, 300); // چک کردن هر 300 میلی‌ثانیه
-
-        } catch (err) {
-            console.error("Error accessing camera: ", err);
-            alert('دسترسی به دوربین با مشکل مواجه شد. ممکن است نیاز به مجوز باشد.');
-            stopCamera();
-        }
-    }
-
-    async function scanVideoFrame() {
-        const videoElement = document.getElementById('cameraVideo');
-        if (!videoElement.videoWidth || videoElement.paused) return;
-
-        try {
-            const results = await barcodeDetector.detect(videoElement);
-            if (results.length > 0) {
-                const detectedBarcode = results[0].rawValue;
-                if (detectedBarcode === lastScannedValue) {
-                    stableScanCount++;
-                } else {
-                    lastScannedValue = detectedBarcode;
-                    stableScanCount = 1;
-                }
-
-                // پایداری: 3 بار پشت سر هم یکسان باشد
-                if (stableScanCount >= 3) {
-                    handleScannedBarcode(detectedBarcode);
-                    stopCamera(); // توقف خودکار پس از اسکن موفق
-                }
-            } else {
-                lastScannedValue = '';
-                stableScanCount = 0;
-            }
-        } catch (e) {
-            console.warn("Barcode detection error:", e);
-            lastScannedValue = '';
-            stableScanCount = 0;
-        }
-    }
-    
-    function zoomIn() {
-        zoomLevel = Math.min(zoomLevel + 0.25, 2.0);
-        applyZoom();
-    }
-    function zoomOut() {
-        zoomLevel = Math.max(zoomLevel - 0.25, 1.0);
-        applyZoom();
-    }
-    function resetZoom() {
-        zoomLevel = 1.0;
-        applyZoom();
-    }
-    function applyZoom() {
-        const videoElement = document.getElementById('cameraVideo');
-        if (videoElement.style) {
-            videoElement.style.transform = `scale(${zoomLevel})`;
-            videoElement.style.transformOrigin = 'center';
-            document.getElementById('hintZoom').textContent = `🔍 زوم: ×${zoomLevel.toFixed(2)}`;
-        }
-    }
-
-    function handleScannedBarcode(barcode) {
-        const trimmedBarcode = barcode.trim();
-        document.getElementById('searchInput').value = trimmedBarcode;
-        applyFilters(); // فیلتر بر اساس بارکد اسکن شده
-        
-        // جستجوی اتوماتیک برای موجودی
-        const foundItem = items.find(item => item[0] === trimmedBarcode);
-        if (foundItem) {
-            const index = items.findIndex(item => item[0] === trimmedBarcode);
-            openEditModal(index);
-        } else {
-            // اگر پیدا نشد، مودال افزودن را باز کن
-            openAddModal();
-            document.getElementById('addBarcode').value = trimmedBarcode;
-            document.getElementById('addStock').value = 0; // فرض بر این است که موجودی در شیت 0 است
-            document.getElementById('addCount1').focus();
-            updateDiscrepancyAdd();
-        }
-    }
-    
-    function scanBarcode(scannerId) {
-        if (scannerId === 'camera') {
-            startCamera();
-        } else {
-            const scanner = SCANNERS.find(s => s.id === scannerId);
-            if (scanner && scanner.intent) {
-                window.location = scanner.intent;
-            } else {
-                alert('اسکنر انتخاب شده در دسترس نیست.');
-            }
-        }
-    }
-
-
-    // ============ عملیات داده اصلی ============
-    function searchItem() {
-        const query = document.getElementById('searchInput').value.trim();
-        if (!query) {
-            renderTable();
-            return;
-        }
-        
-        let foundIndex = -1;
-        
-        if (settings.searchByTag) {
-             foundIndex = items.findIndex(row => row[6] === query); // ستون تگ 6
-        } else {
-             foundIndex = items.findIndex(row => row[0] === query); // ستون بارکد 0
-        }
-        
-        if (foundIndex !== -1) {
-            // اگر پیدا شد، مستقیماً مودال ویرایش باز شود
-            openEditModal(foundIndex);
-        } else {
-            // اگر پیدا نشد، مودال افزودن باز شود
-            openAddModal();
-            document.getElementById('addBarcode').value = query;
-            document.getElementById('addStock').value = 0;
-            document.getElementById('addCount1').focus();
-            updateDiscrepancyAdd();
-        }
-    }
-
-    function importExcel() {
-        const fileInput = document.getElementById('excelFile');
-        if (!fileInput.files.length) return alert('لطفاً یک فایل اکسل انتخاب کنید.');
-        
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-        
-        reader.onload = async (e) => {
-            const data = e.target.result;
-            // **نیاز به اجرای پایتون برای خواندن فایل اکسل به آرایه**
-            showSyncStatus('🔄 در حال پردازش فایل اکسل...', 'info');
-            
-            try {
-                // ارسال فایل به سرور برای پردازش با پایتون/پانداس
-                const response = await fetch('/api/process_excel', { // مسیر فرضی
-                    method: 'POST',
-                    body: data // معمولا به صورت base64 یا فرم دیتا ارسال می‌شود
-                });
-                
-                if (!response.ok) throw new Error('خطا در پردازش فایل اکسل در سمت سرور.');
-                
-                const result = await response.json(); // فرض: آرایه آیتم‌ها را برمی‌گرداند
-                
-                if (Array.isArray(result.data)) {
-                    // **نکته مهم:** داده اکسل باید با ساختار ما مطابقت داشته باشد:
-                    // [بارکد, نام, شمارش۱, مغایرت۱, شمارش۲, مغایرت۲, تگ, تیم, محل, موجودی, توضیحات, تاریخ, کاربر]
-                    
-                    const processedItems = result.data.map(item => {
-                        // ساده‌سازی و اطمینان از وجود 13 فیلد
-                        const stock = item[9] || 0;
-                        const c1 = item[2] || 0;
-                        const c2 = item[4] || 0;
-                        const disc1 = (c1 - stock).toFixed(2);
-                        const disc2 = (c2 - stock).toFixed(2);
-
-                        return [
-                            String(item[0] || ''), 
-                            String(item[1] || ''), 
-                            parseFloat(c1), 
-                            disc1, 
-                            parseFloat(c2), 
-                            disc2, 
-                            String(item[6] || ''), 
-                            settings.teamName, // تیم را با تیم جاری پر کن
-                            String(item[8] || settings.defaultLocation), 
-                            parseFloat(stock), 
-                            String(item[10] || ''), 
-                            getNowFa(), 
-                            settings.userName
-                        ];
-                    });
-                    
-                    // ارسال به سرور (یا ذخیره محلی)
-                    if (settings.scriptUrl) {
-                        const payload = { action: 'save', items: processedItems };
-                        const saveResult = await saveToGoogleAppsScript(payload);
-                        if (saveResult.success) {
-                            items = processedItems;
-                            localStorage.setItem('items', JSON.stringify(items));
-                            renderTable();
-                            showSyncStatus('✅ داده‌های اکسل با موفقیت جایگزین شدند.', 'success');
-                        }
-                    } else {
-                        items = processedItems;
-                        localStorage.setItem('items', JSON.stringify(items));
-                        renderTable();
-                        showSyncStatus('✅ داده‌های اکسل در حافظه محلی ذخیره شدند.', 'success');
-                    }
-
-                }
-            } catch (e) {
-                console.error(e);
-                alert('خطا در خواندن یا پردازش فایل.');
-            }
-        };
-        
-        reader.readAsText(file); // برای سادگی، اگرچه برای XLSX بهتر است از کتابخانه‌های سمت سرور استفاده شود
-    }
-
-
-</script>
-<script>
-    // ============ توابع Google Apps Script (تکمیل کننده) ============
-    
-    // این تابع باید در Code.gs پیاده‌سازی شود تا از سمت سرور فراخوانی شود
-    async function saveToGoogleAppsScript(payload) {
-        if (!settings.scriptUrl) {
-            showSyncStatus('❌ URL اسکریپت تنظیم نشده است.', 'error');
-            return { success: false };
-        }
-        
-        showSyncStatus(`🔄 در حال ارسال ${payload.action} به سرور...`, 'info');
-
-        try {
-            // **استفاده از doPost برای ارسال داده‌ها**
-            const response = await fetch(settings.scriptUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-
-            const resultText = await response.text();
-            let result;
-            try {
-                result = JSON.parse(resultText);
-            } catch(e) {
-                // اگر سرور پاسخ JSON نداد (مثلاً خطای 500)
-                throw new Error(`پاسخ غیرمنتظره سرور: ${resultText.substring(0, 100)}`);
-            }
-
-            if (response.ok && result.success) {
-                showSyncStatus('✅ ذخیره نهایی در شیت موفقیت آمیز بود.', 'success');
-                return { success: true };
-            } else {
-                throw new Error(result.error || `عملیات ${payload.action} ناموفق بود. سرور: ${result.message || 'خطای ناشناخته'}`);
-            }
-
-        } catch (error) {
-            console.error('خطا در ذخیره سمت سرور:', error);
-            showSyncStatus('❌ ذخیره در شیت ناموفق بود.', 'error');
-            alert(`❌ خطای سمت سرور:\n${error.message}`);
-            return { success: false };
-        }
-    }
-
-    // توابع کمکی هماهنگ‌سازی (برای اطمینان از حفظ وضعیت)
-    async function syncAll() {
-        if (!settings.scriptUrl) {
-            showSyncStatus('URL تنظیم نشده است. فقط در حافظه محلی ذخیره می‌شود.', 'info');
-            return;
-        }
-
-        showSyncStatus('🔄 در حال همگام‌سازی کامل...', 'info');
-        
-        // 1. ارسال کل آیتم‌های محلی به سرور برای بازنویسی (عملکرد Save)
-        const payload = {
-            action: 'save',
-            items: items
-        };
-        
-        const saveResult = await saveToGoogleAppsScript(payload);
-        
-        if (saveResult.success) {
-            showSyncStatus('✅ همگام‌سازی کامل موفقیت آمیز بود.', 'success');
-        } else {
-            showSyncStatus('❌ همگام‌سازی کامل ناموفق بود.', 'error');
-        }
-    }
-    
-    // جایگزینی دکمه اصلی ذخیره با همگام‌سازی کامل
-    document.getElementById('reportsBtn').onclick = syncAll;
-    document.getElementById('reportsBtn').textContent = '🔄 همگام‌سازی کامل (Save All)';
-    
-    // تغییر متن دکمه اسکنر
-    document.getElementById('scannerBtn').textContent = '🔍 اسکن / جستجو';
-</script>
+    console.log('✅ نسخه نهایی — با محدودیت افزودن در حالت تگ، اسکن دقیق‌تر، و فیلتر ستونی.');
+  </script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
 </html>
