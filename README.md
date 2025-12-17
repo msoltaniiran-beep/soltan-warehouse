@@ -52,7 +52,7 @@
 <div class="form-group">
   <label>2. لینک Publish to Web (برای نمایش جدول)</label>
   <input type="url" id="sheetUrl" style="width:100%" 
-         placeholder="https://docs.google.com/spreadsheets/d/e/.../pubhtml"
+         placeholder="[https://docs.google.com/spreadsheets/d/e/.../pubhtml](https://docs.google.com/spreadsheets/d/1pBaolhZZ-7UCytgGJNZcGAJKz6cTlsOuqU7oPEBi4Oc/edit?gid=0#gid=0)"
          value="">
   <small>📌 از منوی گوگل شیت: File → Share → Publish to web → Sheet1 → Web page → Publish</small>
 </div>
