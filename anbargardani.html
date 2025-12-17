@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>انبارگردانی سلطان</title>
   <style>
-    /* ... همان استایل قبلی — بدون تغییر ... */
     * {
       margin: 0;
       padding: 0;
@@ -211,19 +210,14 @@
       width: 100%; padding: 12px; background: #f5f5f5; border-radius: 8px;
       font-weight: bold; color: #2e7d32; text-align: center; border: 1px solid #ddd;
     }
-    /* ✅ فیلد پنهان برای لینک اسکریپت */
-    #scriptUrl { display: none; }
   </style>
 </head>
 <body>
-  <!-- ✅ فیلد پنهان برای لینک اسکریپت — فقط یک بار وارد کنید -->
-  <input type="text" id="scriptUrl" value="https://script.google.com/macros/s/ABC123/exec" />
-
   <div class="card">
     <h2>انبارگردانی سلطان</h2>
     <div class="tabs" id="tabsContainer">
       <button class="tab-btn active" data-tab="main">عملیات</button>
-      <!-- ✅ تب گزارشات حذف شد -->
+      <button class="tab-btn" data-tab="settings">⚙️ تنظیمات</button>
     </div>
     <div class="tab-content active" id="tab-main">
       <div id="scanButtonContainer" class="toolbar">
@@ -236,7 +230,6 @@
       <input type="text" id="searchInput" placeholder="بارکد را وارد کنید" autofocus />
       <button onclick="searchOrAdd()">🔍 جستجو / افزودن</button>
     </div>
-    <!-- ✅ تب تنظیمات بدون تغییر — همچنان لوکال -->
     <div class="tab-content" id="tab-settings">
       <h3>⚙️ تنظیمات سیستم</h3>
       <label>👤 نام کاربر:</label>
@@ -269,13 +262,19 @@
       <input type="file" id="excelFile" accept=".xlsx,.xls" style="width:100%; margin:6px 0;" />
       <button onclick="loadExcel()" style="width:100%; margin:6px 0;">📥 import اکسل</button>
       <button onclick="exportExcel()" style="width:100%; margin:6px 0; background:#1976d2;">📤 خروجی اکسل</button>
-      <button onclick="clearAll()" class="danger" style="width:100%; margin:6px 0;">🗑️ پاک کردن همه داده‌ها</button>
+      <!-- ❌ حذف شد: <button onclick="clearAll()" class="danger" style="width:100%; margin:6px 0;">🗑️ پاک کردن همه داده‌ها</button> -->
+      <h4 style="margin:20px 0 8px;">🔗 اتصال به گوگل شیت</h4>
+      <label>🌐 آدرس سایت گوگل شیت (Publish to Web):</label>
+      <input type="url" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/e/.../pubhtml" style="width:100%;" />
+      <label>⚙️ آدرس اسکریپت (Google Apps Script):</label>
+      <input type="url" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;" />
       <button onclick="saveSettings()" style="margin-top:20px; width:100%;">✅ ذخیره تنظیمات</button>
     </div>
   </div>
   <div class="card" id="mainTableCard">
     <h3>لیست کل داده‌ها (<span id="totalCount">0</span> مورد)</h3>
     <input type="text" id="globalSearch" placeholder="🔍 جستجو در همه ستون‌ها..." oninput="applyFilters()" style="margin-bottom:12px;" />
+    <button onclick="loadItemsFromSheet()" class="secondary" style="width:100%; margin:6px 0;">🔄 بارگذاری مجدد از شیت</button>
     <div class="table-container">
       <table class="table">
         <thead>
@@ -303,8 +302,6 @@
       </table>
     </div>
   </div>
-
-  <!-- ✅ مابقی مودال‌ها بدون تغییر (اسکن، افزودن، ویرایش، ماشین‌حساب) -->
   <div id="cameraModal" class="modal hidden">
     <div style="position:relative; width:100vw; height:100vh;">
       <video id="cameraVideo" playsinline></video>
@@ -421,7 +418,6 @@
               onclick="closeCalcModal()">❌ لغو</button>
     </div>
   </div>
-
   <script>
     // ✅ تنظیمات همچنان لوکال
     let settings = JSON.parse(localStorage.getItem('appSettings')) || {
@@ -430,9 +426,11 @@
       defaultLocation: '',
       minLength: 14,
       maxLength: 20,
-      searchByTag: false
+      searchByTag: false,
+      sheetUrl: '', // اضافه شده برای لینک شیت
+      scriptUrl: '' // اضافه شده برای لینک اسکریپت
     };
-    
+
     // ✅ items دیگر لوکال نیست — فقط در حافظه موقت
     let items = []; // فقط برای نمایش — همیشه از شیت بارگذاری می‌شود
     let filters = {};
@@ -448,7 +446,7 @@
 
     // ✅ تابع اتصال به گوگل شیت — کلید موفقیت
     async function callSheet(action, data = {}) {
-      const scriptUrl = document.getElementById('scriptUrl').value.trim();
+      const scriptUrl = settings.scriptUrl.trim();
       if (!scriptUrl) throw new Error('لینک اسکریپت تنظیم نشده است.');
       
       const url = scriptUrl + '?action=' + action;
@@ -520,9 +518,8 @@
       }
     }
 
-    // ✅ بقیه توابع بدون تغییر — فقط جایگزینی localStorage با تماس به شیت
     document.addEventListener('DOMContentLoaded', () => {
-      // 🔹 تب‌ها — فقط «عملیات» + «تنظیمات»
+      // 🔹 تب‌ها — فقط «عملیات» و «تنظیمات»
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -544,16 +541,16 @@
       document.getElementById('settingMinLength').value = settings.minLength;
       document.getElementById('settingMaxLength').value = settings.maxLength;
       document.getElementById('searchByTag').checked = settings.searchByTag;
-      document.getElementById('searchByTag').addEventListener('change', function() {
-        settings.searchByTag = this.checked;
-        updateSearchUI();
-      });
+      document.getElementById('sheetUrl').value = settings.sheetUrl;
+      document.getElementById('scriptUrl').value = settings.scriptUrl;
       document.getElementById('globalLocationDisplay').textContent = settings.defaultLocation;
 
       updateSearchUI();
       
       // ✅ شروع بارگذاری اولیه از شیت
-      loadItemsFromSheet();
+      if (settings.scriptUrl) {
+        loadItemsFromSheet();
+      }
 
       // کدهای دیگر (ماشین‌حساب، اسکن) بدون تغییر
       ['addCount1','addCount2','editCount1','editCount2'].forEach(id => {
@@ -582,8 +579,6 @@
         setTimeout(searchOrAdd, 150);
       }
     });
-
-    // ✅ بقیه توابع (renderTable, searchOrAdd, saveAdd, saveEdit, ...) بدون تغییر — فقط جایگزینی localStorage
 
     function updateSearchUI() {
       const searchByTag = settings.searchByTag;
@@ -653,6 +648,14 @@
       alert(`✅ اسکنر: ${sel.name}`);
     }
 
+    function launchExternalScanner(id) {
+      const s = SCANNERS.find(x => x.id === id);
+      if (s && s.intent) {
+        const w = window.open(s.intent, '_self');
+        if (!w) alert(`❌ «${s.name}» نصب نیست. از اسکن داخلی استفاده کنید.`);
+      }
+    }
+
     function startScan() {
       if (settings.searchByTag) {
         alert('⚠️ در حالت جستجو بر اساس تگ، اسکن بارکد غیرفعال است.');
@@ -662,14 +665,6 @@
         startCameraScan();
       } else {
         launchExternalScanner(LAST_SCAN_METHOD);
-      }
-    }
-
-    function launchExternalScanner(id) {
-      const s = SCANNERS.find(x => x.id === id);
-      if (s && s.intent) {
-        const w = window.open(s.intent, '_self');
-        if (!w) alert(`❌ «${s.name}» نصب نیست. از اسکن داخلی استفاده کنید.`);
       }
     }
 
@@ -816,14 +811,6 @@
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'انبار');
       XLSX.writeFile(wb, 'انبارگردانی_خروجی.xlsx');
-    }
-
-    function clearAll() {
-      if (confirm('⚠️ تمام داده‌های شیت پاک شوند؟ (این عمل غیرقابل بازگشت است)')) {
-        // ✅ برای پاک‌کردن، فقط یک خالی‌کردن سریع از شیت — ولی راحت‌تر این است که شیت را دستی پاک کنید
-        // یا یک endpoint 'clear' در اسکریپت اضافه کنید
-        alert('💡 لطفاً برای پاک‌کردن کامل، شیت را دستی خالی کنید یا endpoint clear را اضافه کنید.');
-      }
     }
 
     function searchOrAdd() {
@@ -1138,8 +1125,19 @@
       const min = parseInt(document.getElementById('settingMinLength').value) || 14;
       const max = parseInt(document.getElementById('settingMaxLength').value) || 20;
       const searchByTag = document.getElementById('searchByTag').checked;
+      const sheetUrl = document.getElementById('sheetUrl').value.trim();
+      const scriptUrl = document.getElementById('scriptUrl').value.trim();
       if (min > max) return alert('⚠️ حداقل نباید بیشتر از حداکثر باشد.');
-      settings = { userName: user, teamName: team, defaultLocation: loc, minLength: min, maxLength: max, searchByTag };
+      settings = { 
+        userName: user, 
+        teamName: team, 
+        defaultLocation: loc, 
+        minLength: min, 
+        maxLength: max, 
+        searchByTag, 
+        sheetUrl, 
+        scriptUrl 
+      };
       localStorage.setItem('appSettings', JSON.stringify(settings));
       document.getElementById('globalLocationDisplay').textContent = loc;
       updateSearchUI();
