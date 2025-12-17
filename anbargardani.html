@@ -5,13 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>انبارگردانی سلطان</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Vazir', 'IRANSans', Tahoma, sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Vazir', 'IRANSans', Tahoma, sans-serif; -webkit-font-smoothing: antialiased; }
     body { background: #f9fafb; padding: 12px; }
     .card { background: white; border-radius: 12px; padding: 16px; margin: 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     input, select, textarea, button {
@@ -286,15 +280,15 @@
       <label>نام کالا:</label>
       <input type="text" id="addName" />
       <label>موجودی سیستمی:</label>
-      <input type="number" id="addStock" step="0.01" readonly />
+      <input type="number" id="addStock" step="0.01" value="0" />
       <label>شمارش ۱:</label>
-      <input type="number" id="addCount1" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyAdd()" />
+      <input type="number" id="addCount1" step="0.01" inputmode="numeric" oninput="updateDiscrepancyAdd()" />
       <div>مغایرت۱: <span id="addDisc1" class="discrepancy">—</span></div>
       <label>شمارش ۲:</label>
-      <input type="number" id="addCount2" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyAdd()" />
+      <input type="number" id="addCount2" step="0.01" inputmode="numeric" oninput="updateDiscrepancyAdd()" />
       <div>مغایرت۲: <span id="addDisc2" class="discrepancy">—</span></div>
       <label>تگ:</label>
-      <input type="number" id="addTag" />
+      <input type="text" id="addTag" />
       <label>تیم:</label>
       <input type="text" id="addTeam" readonly />
       <label>محل:</label>
@@ -315,17 +309,19 @@
   <div id="editModal" class="modal hidden">
     <div class="modal-content">
       <h3>ویرایش کالا</h3>
+      <input type="hidden" id="editOriginalBarcode" />
+      <input type="hidden" id="editOriginalLocation" />
       <label>بارکد:</label>
-      <input type="text" id="editBarcode" readonly />
+      <input type="text" id="editBarcode" />
       <label>نام کالا:</label>
       <input type="text" id="editName" />
       <label>موجودی سیستمی:</label>
-      <input type="number" id="editStock" step="0.01" readonly />
+      <input type="number" id="editStock" step="0.01" oninput="updateDiscrepancyEdit()" />
       <label>شمارش ۱:</label>
-      <input type="number" id="editCount1" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyEdit()" />
+      <input type="number" id="editCount1" step="0.01" inputmode="numeric" oninput="updateDiscrepancyEdit()" />
       <div>مغایرت۱: <span id="editDisc1" class="discrepancy">—</span></div>
       <label>شمارش ۲:</label>
-      <input type="number" id="editCount2" step="0.01" inputmode="numeric" pattern="[0-9.]*" oninput="updateDiscrepancyEdit()" />
+      <input type="number" id="editCount2" step="0.01" inputmode="numeric" oninput="updateDiscrepancyEdit()" />
       <div>مغایرت۲: <span id="editDisc2" class="discrepancy">—</span></div>
       <label>تگ:</label>
       <input type="text" id="editTag" />
@@ -380,19 +376,17 @@
   </div>
 
   <script>
-    // ⚙️ تنظیمات (از localStorage)
+    // ⚙️ تنظیمات (فقط تنظیمات — ایتم‌ها دیگر در localStorage نیستند)
     let settings = JSON.parse(localStorage.getItem('appSettings')) || {
       userName: 'کاربر',
       teamName: '',
-      defaultLocation: '',
+      defaultLocation: 'انبار مرکزی',
       minLength: 14,
       maxLength: 20,
       searchByTag: false,
       scriptUrl: ''
     };
 
-    let items = JSON.parse(localStorage.getItem('items')) || [];
-    let currentEditIndex = -1;
     let currentDropdown = null;
     let LAST_SCAN_METHOD = localStorage.getItem('scanner') || 'camera';
     let barcodeDetector = null;
@@ -414,9 +408,6 @@
       });
 
       // بارگذاری تنظیمات
-      if (!settings.defaultLocation) {
-        settings.defaultLocation = 'انبار مرکزی';
-      }
       document.getElementById('settingUserName').value = settings.userName;
       document.getElementById('settingTeamName').value = settings.teamName;
       document.getElementById('settingDefaultLocation').value = settings.defaultLocation;
@@ -447,9 +438,8 @@
       }
     }
 
-    // ███████████████████████████████████████████████████████████████████████
-    // 🔌 تست ارتباط با گوگل اپس اسکریپت (no-cors)
-    function testScriptConnection() {
+    // 🔌 تست ارتباط — با fetch واقعی و CORS پشتیبانی‌شده
+    async function testScriptConnection() {
       const url = document.getElementById('settingScriptUrl').value.trim();
       const statusEl = document.getElementById('scriptStatus');
 
@@ -468,24 +458,24 @@
       statusEl.textContent = 'در حال ارسال درخواست…';
       statusEl.className = 'status-box status-warn';
 
-      // تست GET بدون انتظار پاسخ (جلوگیری از خطای CORS)
-      fetch(url + '?test=1&action=test', {
-        method: 'GET',
-        mode: 'no-cors', // ✅ کلید موفقیت — همیشه ارسال می‌شود
-        cache: 'no-cache'
-      })
-      .then(() => {
-        // با no-cors تقریباً هرگز reject نمی‌شود — پس موفقیت در ارسال را نشان می‌دهیم
-        statusEl.textContent = '✅ درخواست ارسال شد. اگر اسکریپت فعال باشد، پاسخ داده می‌شود.';
-        statusEl.className = 'status-box status-ok';
-      })
-      .catch(err => {
-        statusEl.textContent = '⚠️ خطا در ارسال درخواست: ' + (err.message || 'نامشخص');
-        statusEl.className = 'status-box status-warn';
-      });
+      try {
+        const res = await fetch(url + '?action=test', {
+          method: 'GET',
+          mode: 'cors' // ✅ حتماً cors باشد تا پاسخ خوانده شود
+        });
+        const data = await res.json();
+        if (data.success) {
+          statusEl.textContent = `✅ ${data.message}`;
+          statusEl.className = 'status-box status-ok';
+        } else {
+          throw new Error(data.error || 'پاسخ ناموفق');
+        }
+      } catch (err) {
+        statusEl.textContent = `❌ خطا: ${err.message}`;
+        statusEl.className = 'status-box status-error';
+      }
     }
 
-    // 🛠️ ذخیره تنظیمات
     function saveSettings() {
       const user = document.getElementById('settingUserName').value.trim() || 'کاربر';
       const team = document.getElementById('settingTeamName').value.trim();
@@ -514,8 +504,7 @@
       alert('✅ تنظیمات ذخیره شد.');
     }
 
-    // ███████████████████████████████████████████████████████████████████████
-    // 📸 دوربین و اسکن (کدهای قبلی بدون تغییر)
+    // 📸 دوربین و اسکن
     async function applyZoom(level) {
       zoomLevel = Math.max(1.0, Math.min(3.0, level));
       document.getElementById('hintZoom').textContent = `🔍 زوم: ×${zoomLevel.toFixed(1)}`;
@@ -641,38 +630,37 @@
       stableScanCount = 0;
     }
 
-    // ███████████████████████████████████████████████████████████████████████
-    // ✏️ عملیات افزودن/ویرایش (بدون تغییر — فقط ذخیره در localStorage)
-    function searchOrAdd() {
+    // 🔍 جستجو/افزودن — مستقیم از/به Google Sheet
+    async function searchOrAdd() {
       const query = document.getElementById('searchInput').value.trim();
       const loc = settings.defaultLocation;
       if (!query) return alert('لطفاً مقدار را وارد کنید.');
-      if (settings.searchByTag) {
-        const idx = items.findIndex(r => r[6] === query && r[8] === loc);
-        if (idx !== -1) {
-          openEditModal(idx);
+      if (!settings.scriptUrl) return alert('⚠️ ابتدا URL اسکریپت را در تنظیمات وارد و ذخیره کنید.');
+
+      try {
+        const res = await fetch(settings.scriptUrl + '?action=search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, location: loc, byTag: settings.searchByTag })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'خطا در سرور');
+
+        if (data.items && data.items.length > 0) {
+          openEditModal(data.items[0]);
         } else {
-          alert('⚠️ در حالت «جستجو بر اساس تگ»، افزودن کالای جدید غیرفعال است. کالایی با این تگ یافت نشد.');
-          return;
+          openAddModal(query, loc);
         }
-      } else {
-        if (query.length < settings.minLength || query.length > settings.maxLength) {
-          alert(`❌ طول بارکد (${query.length}) خارج از محدوده (${settings.minLength}–${settings.maxLength}) است.`);
-          return;
-        }
-        const idx = items.findIndex(r => r[0] === query && r[8] === loc);
-        if (idx !== -1) openEditModal(idx);
-        else openAddModal(query, loc);
+      } catch (err) {
+        alert('❌ خطا در جستجو: ' + err.message);
       }
     }
 
     function openAddModal(bc, loc, tag = '') {
-      const existing = items.find(r => r[0] === bc);
-      const stock = existing ? parseFloat(existing[9]) || 0 : 0;
       document.getElementById('addBarcode').value = bc;
       document.getElementById('addLocation').value = loc;
-      document.getElementById('addStock').value = stock;
-      document.getElementById('addCount1').value = stock;
+      document.getElementById('addStock').value = 0;
+      document.getElementById('addCount1').value = 0;
       document.getElementById('addCount2').value = '';
       document.getElementById('addTag').value = tag;
       document.getElementById('addTeam').value = settings.teamName;
@@ -681,75 +669,95 @@
       document.getElementById('addModal').classList.remove('hidden');
     }
 
-    function saveAdd() {
-      const bc = document.getElementById('addBarcode').value.trim();
-      const name = document.getElementById('addName').value.trim();
-      const stock = parseFloat(document.getElementById('addStock').value) || 0;
-      const c1 = parseFloat(document.getElementById('addCount1').value) || 0;
-      const c2Raw = document.getElementById('addCount2').value;
-      const c2 = c2Raw !== '' ? parseFloat(c2Raw) || 0 : 0;
-      const disc1 = (c1 - stock).toFixed(2);
-      const disc2 = calculateDiscrepancy2(stock, c2Raw, disc1);
-      const newRow = [
-        bc, name, c1, disc1, c2, disc2,
-        document.getElementById('addTag').value.trim(),
-        settings.teamName,
-        document.getElementById('addLocation').value.trim(),
-        stock,
-        document.getElementById('addNotes').value.trim(),
-        getNowFa(),
-        settings.userName
-      ];
-      items.push(newRow);
-      localStorage.setItem('items', JSON.stringify(items));
-      closeAddModal();
-      document.getElementById('searchInput').value = '';
-      alert('✅ کالا اضافه شد.');
+    async function saveAdd() {
+      if (!settings.scriptUrl) return alert('⚠️ URL اسکریپت ثبت نشده.');
+      
+      const item = {
+        barcode: document.getElementById('addBarcode').value.trim(),
+        name: document.getElementById('addName').value.trim(),
+        stock: parseFloat(document.getElementById('addStock').value) || 0,
+        count1: parseFloat(document.getElementById('addCount1').value) || 0,
+        count2: document.getElementById('addCount2').value ? parseFloat(document.getElementById('addCount2').value) : null,
+        tag: document.getElementById('addTag').value.trim(),
+        team: settings.teamName,
+        location: document.getElementById('addLocation').value.trim(),
+        notes: document.getElementById('addNotes').value.trim(),
+        timestamp: getNowFa(),
+        user: settings.userName
+      };
+
+      try {
+        const res = await fetch(settings.scriptUrl + '?action=add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ item })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        
+        closeAddModal();
+        document.getElementById('searchInput').value = '';
+        alert('✅ کالا در گوگل شیت ذخیره شد.');
+      } catch (err) {
+        alert('❌ خطا در ذخیره: ' + err.message);
+      }
     }
 
-    function openEditModal(idx) {
-      currentEditIndex = idx;
-      const r = items[idx];
-      document.getElementById('editBarcode').value = r[0];
-      document.getElementById('editName').value = r[1] || '';
-      document.getElementById('editStock').value = r[9] || 0;
-      document.getElementById('editCount1').value = r[2] || '';
-      document.getElementById('editCount2').value = r[4] != null ? r[4] : '';
-      document.getElementById('editTag').value = r[6] || '';
+    function openEditModal(item) {
+      document.getElementById('editOriginalBarcode').value = item.barcode;
+      document.getElementById('editOriginalLocation').value = item.location;
+      
+      document.getElementById('editBarcode').value = item.barcode;
+      document.getElementById('editName').value = item.name;
+      document.getElementById('editStock').value = item.stock;
+      document.getElementById('editCount1').value = item.count1;
+      document.getElementById('editCount2').value = (item.count2 !== null && item.count2 !== 0) ? item.count2 : '';
+      document.getElementById('editTag').value = item.tag;
       document.getElementById('editTeam').value = settings.teamName;
-      document.getElementById('editLocation').value = r[8] || '';
-      document.getElementById('editNotes').value = r[10] || '';
+      document.getElementById('editLocation').value = item.location;
+      document.getElementById('editNotes').value = item.notes;
+      
       updateDiscrepancyEdit();
       document.getElementById('editModal').classList.remove('hidden');
     }
 
-    function saveEdit() {
-      if (currentEditIndex < 0) return;
-      const r = [...items[currentEditIndex]];
-      const stock = parseFloat(document.getElementById('editStock').value) || 0;
-      const c1 = parseFloat(document.getElementById('editCount1').value) || 0;
-      const c2Raw = document.getElementById('editCount2').value;
-      const c2 = c2Raw !== '' ? parseFloat(c2Raw) || 0 : 0;
-      r[1] = document.getElementById('editName').value.trim();
-      r[2] = c1;
-      r[4] = c2;
-      r[6] = document.getElementById('editTag').value.trim();
-      r[7] = settings.teamName;
-      r[8] = document.getElementById('editLocation').value.trim();
-      r[10] = document.getElementById('editNotes').value.trim();
-      r[9] = stock;
-      r[11] = getNowFa();
-      r[12] = settings.userName;
-      r[3] = (c1 - stock).toFixed(2);
-      r[5] = calculateDiscrepancy2(stock, c2Raw, r[3]);
-      items[currentEditIndex] = r;
-      localStorage.setItem('items', JSON.stringify(items));
-      closeEditModal();
-      document.getElementById('searchInput').value = '';
-      alert('✅ تغییرات ذخیره شد.');
+    async function saveEdit() {
+      if (!settings.scriptUrl) return alert('⚠️ URL اسکریپت ثبت نشده.');
+      
+      const item = {
+        barcode: document.getElementById('editBarcode').value.trim(),
+        name: document.getElementById('editName').value.trim(),
+        stock: parseFloat(document.getElementById('editStock').value) || 0,
+        count1: parseFloat(document.getElementById('editCount1').value) || 0,
+        count2: document.getElementById('editCount2').value ? parseFloat(document.getElementById('editCount2').value) : null,
+        tag: document.getElementById('editTag').value.trim(),
+        team: settings.teamName,
+        location: document.getElementById('editLocation').value.trim(),
+        notes: document.getElementById('editNotes').value.trim(),
+        timestamp: getNowFa(),
+        user: settings.userName
+      };
+
+      const originalBarcode = document.getElementById('editOriginalBarcode').value;
+      const originalLocation = document.getElementById('editOriginalLocation').value;
+
+      try {
+        const res = await fetch(settings.scriptUrl + '?action=update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ barcode: originalBarcode, location: originalLocation, item })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        
+        closeEditModal();
+        document.getElementById('searchInput').value = '';
+        alert('✅ تغییرات در گوگل شیت ذخیره شد.');
+      } catch (err) {
+        alert('❌ خطا در ویرایش: ' + err.message);
+      }
     }
 
-    // ███████████████████████████████████████████████████████████████████████
     // کمکی‌ها
     function getNowFa() {
       return new Intl.DateTimeFormat('fa-IR', {
@@ -758,32 +766,25 @@
       }).format(new Date()).replace(/،/g, ' ');
     }
 
-    function calculateDiscrepancy2(stock, count2Str, discrepancy1) {
-      if (parseFloat(discrepancy1) === 0) {
-        const c2 = count2Str !== '' ? parseFloat(count2Str) : null;
-        if (c2 === null || c2 === 0) return "0.00";
-      }
-      const c2 = count2Str !== '' ? parseFloat(count2Str) || 0 : 0;
-      return (c2 - stock).toFixed(2);
-    }
-
     function updateDiscrepancyAdd() {
       const stock = parseFloat(document.getElementById('addStock').value) || 0;
       const c1 = parseFloat(document.getElementById('addCount1').value) || 0;
-      const c2 = document.getElementById('addCount2').value;
+      const c2Raw = document.getElementById('addCount2').value;
+      const c2 = c2Raw !== '' ? parseFloat(c2Raw) : null;
       const disc1 = (c1 - stock).toFixed(2);
       document.getElementById('addDisc1').textContent = disc1;
-      const disc2 = calculateDiscrepancy2(stock, c2, disc1);
+      const disc2 = (c2 === null) ? "0.00" : (c2 - stock).toFixed(2);
       document.getElementById('addDisc2').textContent = disc2;
     }
 
     function updateDiscrepancyEdit() {
       const stock = parseFloat(document.getElementById('editStock').value) || 0;
       const c1 = parseFloat(document.getElementById('editCount1').value) || 0;
-      const c2 = document.getElementById('editCount2').value;
+      const c2Raw = document.getElementById('editCount2').value;
+      const c2 = c2Raw !== '' ? parseFloat(c2Raw) : null;
       const disc1 = (c1 - stock).toFixed(2);
       document.getElementById('editDisc1').textContent = disc1;
-      const disc2 = calculateDiscrepancy2(stock, c2, disc1);
+      const disc2 = (c2 === null) ? "0.00" : (c2 - stock).toFixed(2);
       document.getElementById('editDisc2').textContent = disc2;
     }
 
@@ -818,12 +819,10 @@
       CURRENT_CALC_TARGET = null; 
     }
 
-    // 📍 محل‌ها
+    // 📍 محل‌ها — از داده‌های محلی تنظیمات + ورودی کاربر
     function getLocations() {
-      const set = new Set();
-      items.forEach(r => { const loc = (r[8] || '').trim(); if (loc) set.add(loc); });
-      if (settings.defaultLocation) set.add(settings.defaultLocation);
-      return Array.from(set).sort();
+      const set = new Set([settings.defaultLocation]);
+      return Array.from(set).filter(l => l).sort();
     }
     function renderDropdown(id, locations) {
       const el = document.getElementById(id);
@@ -874,14 +873,12 @@
       hideAllDropdowns();
     }
 
-    // ✖️ بستن مدال‌ها
     function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
     function closeEditModal() { 
-      document.getElementById('editModal').classList.add('hidden');
-      currentEditIndex = -1; 
+      document.getElementById('editModal').classList.add('hidden'); 
     }
 
-    console.log('✅ نسخه نهایی — بدون جدول، بدون گزارشات، بدون import/export، با تست ارتباط');
+    console.log('✅ نسخه نهایی — بدون ذخیره لوکال ایتم‌ها، ارتباط مستقیم با Google Sheet');
   </script>
 </body>
 </html>
