@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سامانه اتوماسیون منابع انسانی</title>
+  <style>
+    /* ── Token system ─────────────────────────────────────────── */
+    :root {
+      --n-0:  oklch(98% 0.005 250);
+      --n-1:  oklch(95% 0.008 250);
+      --n-2:  oklch(90% 0.010 250);
+      --n-3:  oklch(80% 0.012 250);
+      --n-4:  oklch(60% 0.014 250);
+      --n-5:  oklch(45% 0.014 250);
+      --n-6:  oklch(30% 0.012 250);
+      --n-7:  oklch(18% 0.010 250);
+      --n-8:  oklch(13% 0.008 250);
+
+      --a-base:   oklch(55% 0.18 240);
+      --a-light:  oklch(68% 0.16 240);
+      --a-dark:   oklch(42% 0.18 240);
+      --a-bg:     oklch(96% 0.04 240);
+
+      --success:  oklch(55% 0.15 150);
+      --warning:  oklch(62% 0.17 75);
+      --danger:   oklch(54% 0.20 25);
+      --info:     oklch(58% 0.16 220);
+
+      --surface:        var(--n-0);
+      --surface-raised: #fff;
+      --border:         var(--n-2);
+      --text-muted:     var(--n-4);
+      --text-body:      var(--n-7);
+      --text-heading:   var(--n-8);
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+
+      --shadow-sm: 0 1px 3px oklch(13% 0.01 250 / 0.10);
+      --shadow-md: 0 4px 12px oklch(13% 0.01 250 / 0.12);
+
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --space-7: 48px;
+
+      --font: 'Segoe UI', Tahoma, sans-serif;
+      --fs-xs: 0.75rem;
+      --fs-sm: 0.875rem;
+      --fs-base: 1rem;
+      --fs-lg: 1.125rem;
+      --fs-xl: 1.375rem;
+      --fs-2xl: 1.75rem;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --n-0:  oklch(14% 0.010 250);
+        --n-1:  oklch(18% 0.012 250);
+        --n-2:  oklch(25% 0.012 250);
+        --n-3:  oklch(38% 0.012 250);
+        --n-4:  oklch(55% 0.010 250);
+        --n-5:  oklch(70% 0.008 250);
+        --n-6:  oklch(82% 0.006 250);
+        --n-7:  oklch(92% 0.005 250);
+        --n-8:  oklch(97% 0.004 250);
+
+        --a-base:  oklch(62% 0.17 240);
+        --a-light: oklch(72% 0.14 240);
+        --a-dark:  oklch(50% 0.18 240);
+        --a-bg:    oklch(22% 0.06 240);
+
+        --surface:        var(--n-0);
+        --surface-raised: var(--n-1);
+        --border:         var(--n-2);
+        --text-muted:     var(--n-4);
+        --text-body:      var(--n-7);
+        --text-heading:   var(--n-8);
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      font-size: var(--fs-base);
+      line-height: 1.6;
+      color: var(--text-body);
+      background: var(--surface);
+      min-height: 100vh;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .app { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: 56px 1fr; min-height: 100vh; }
+
+    /* ── Topbar ───────────────────────────────────────────────── */
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 var(--space-5);
+      background: var(--surface-raised);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      gap: var(--space-4);
+    }
+    .topbar__brand { font-size: var(--fs-lg); font-weight: 700; color: var(--a-base); letter-spacing: -0.01em; }
+    .topbar__user { display: flex; align-items: center; gap: var(--space-2); font-size: var(--fs-sm); color: var(--text-muted); }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--a-bg); color: var(--a-base);
+      display: grid; place-items: center; font-weight: 700; font-size: var(--fs-xs);
+    }
+
+    /* ── Sidebar ──────────────────────────────────────────────── */
+    .sidebar {
+      background: var(--surface-raised);
+      border-left: 1px solid var(--border);
+      padding: var(--space-5) 0;
+      display: flex; flex-direction: column; gap: var(--space-1);
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: var(--space-3);
+      padding: var(--space-3) var(--space-5);
+      cursor: pointer;
+      font-size: var(--fs-sm); color: var(--text-body);
+      border: none; background: none; width: 100%; text-align: right;
+      transition: background 150ms ease, color 150ms ease;
+      border-radius: 0;
+    }
+    .nav-item:hover { background: var(--n-1); color: var(--a-base); }
+    .nav-item:focus-visible { outline: 2px solid var(--a-base); outline-offset: -2px; }
+    .nav-item.active { background: var(--a-bg); color: var(--a-base); font-weight: 600; }
+    .nav-item .icon { font-size: 1.1rem; flex-shrink: 0; }
+
+    /* ── Main ─────────────────────────────────────────────────── */
+    .main { padding: var(--space-6); overflow-y: auto; }
+
+    /* ── Section ──────────────────────────────────────────────── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: var(--space-5);
+      flex-wrap: wrap; gap: var(--space-3);
+    }
+    .section-title { font-size: var(--fs-xl); font-weight: 700; color: var(--text-heading); }
+
+    /* ── Stats row ────────────────────────────────────────────── */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6); }
+    .stat-card {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--space-5);
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-card__label { font-size: var(--fs-xs); color: var(--text-muted); margin-bottom: var(--space-1); }
+    .stat-card__value { font-size: var(--fs-2xl); font-weight: 700; color: var(--a-base); font-variant-numeric: tabular-nums; }
+
+    /* ── Card ─────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .card-body { padding: var(--space-5); }
+
+    /* ── Table ────────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+    thead th {
+      position: sticky; top: 0;
+      background: var(--n-1);
+      padding: var(--space-3) var(--space-4);
+      text-align: right;
+      font-weight: 600; color: var(--text-heading);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody tr { transition: background 120ms ease; }
+    tbody tr:hover { background: var(--n-1); }
+    tbody td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); color: var(--text-body); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ── Badge ────────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center; gap: var(--space-1);
+      padding: 2px var(--space-2);
+      border-radius: var(--radius-sm);
+      font-size: var(--fs-xs); font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge--success { background: oklch(92% 0.08 150); color: oklch(35% 0.15 150); }
+    .badge--warning { background: oklch(94% 0.08 75);  color: oklch(38% 0.17 75); }
+    .badge--danger  { background: oklch(93% 0.08 25);  color: oklch(40% 0.18 25); }
+    .badge--info    { background: oklch(92% 0.07 220);  color: oklch(40% 0.16 220); }
+
+    /* ── Button ───────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: var(--space-2);
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-sm);
+      font-size: var(--fs-sm); font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background 150ms ease, box-shadow 150ms ease, transform 100ms ease;
+      min-height: 36px;
+    }
+    .btn:focus-visible { outline: 2px solid var(--a-base); outline-offset: 2px; }
+    .btn:active { transform: scale(0.98); }
+    .btn--primary { background: var(--a-base); color: #fff; }
+    .btn--primary:hover { background: var(--a-dark); box-shadow: var(--shadow-sm); }
+    .btn--ghost { background: transparent; color: var(--a-base); border-color: var(--a-base); }
+    .btn--ghost:hover { background: var(--a-bg); }
+    .btn--danger-ghost { background: transparent; color: var(--danger); border-color: var(--danger); }
+    .btn--danger-ghost:hover { background: oklch(96% 0.04 25); }
+    .btn--sm { padding: var(--space-1) var(--space-3); min-height: 28px; font-size: var(--fs-xs); }
+
+    /* ── Form ─────────────────────────────────────────────────── */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4) var(--space-5); }
+    .form-field { display: flex; flex-direction: column; gap: var(--space-1); }
+    .form-field label { font-size: var(--fs-sm); font-weight: 600; color: var(--text-heading); }
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: var(--fs-sm); font-family: var(--font);
+      color: var(--text-body); background: var(--surface);
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+      min-height: 38px;
+    }
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus {
+      outline: none;
+      border-color: var(--a-base);
+      box-shadow: 0 0 0 3px oklch(55% 0.18 240 / 0.15);
+    }
+    .form-field input.error { border-color: var(--danger); }
+    .form-field .field-error { font-size: var(--fs-xs); color: var(--danger); display: none; }
+    .form-field input.error + .field-error { display: block; }
+    .form-actions { display: flex; gap: var(--space-3); margin-top: var(--space-5); justify-content: flex-end; }
+
+    /* ── Modal ────────────────────────────────────────────────── */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: oklch(13% 0.01 250 / 0.45);
+      z-index: 100;
+      place-items: center;
+    }
+    .modal-backdrop.open { display: grid; }
+    .modal {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      width: min(520px, 90vw);
+      max-height: 90vh; overflow-y: auto;
+      padding: var(--space-6);
+      animation: modal-in 180ms ease;
+    }
+    @keyframes modal-in { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-5); }
+    .modal-title { font-size: var(--fs-lg); font-weight: 700; color: var(--text-heading); }
+    .modal-close { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1.4rem; line-height: 1; padding: var(--space-1); border-radius: var(--radius-sm); }
+    .modal-close:hover { color: var(--text-body); background: var(--n-1); }
+    .modal-close:focus-visible { outline: 2px solid var(--a-base); }
+
+    /* ── Toast ────────────────────────────────────────────────── */
+    #toast-container { position: fixed; bottom: var(--space-5); left: var(--space-5); z-index: 200; display: flex; flex-direction: column; gap: var(--space-2); }
+    .toast {
+      background: var(--n-8); color: var(--n-0);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-md);
+      font-size: var(--fs-sm); box-shadow: var(--shadow-md);
+      display: flex; align-items: center; gap: var(--space-2);
+      animation: toast-in 200ms ease;
+      max-width: 320px;
+    }
+    @keyframes toast-in { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .toast--success { background: oklch(40% 0.15 150); color: #fff; }
+    .toast--danger  { background: oklch(42% 0.18 25);  color: #fff; }
+
+    /* ── Loading skeleton ─────────────────────────────────────── */
+    .skeleton { background: var(--n-2); border-radius: var(--radius-sm); animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 720px) {
+      .app { grid-template-columns: 1fr; grid-template-rows: 56px auto 1fr; }
+      .sidebar { grid-row: 2; flex-direction: row; overflow-x: auto; padding: var(--space-2) var(--space-3); border-left: none; border-bottom: 1px solid var(--border); }
+      .nav-item { flex-direction: column; gap: var(--space-1); padding: var(--space-2) var(--space-3); font-size: var(--fs-xs); min-width: 72px; }
+      .main { padding: var(--space-4); }
+    }
+  </style>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <span class="topbar__brand">HR ات اتوماسیون</span>
+    <div class="topbar__user">
+      <span>محمد سلطانی</span>
+      <div class="avatar" aria-hidden="true">م</div>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <nav class="sidebar" aria-label="منوی اصلی">
+    <button class="nav-item active" data-section="employees" aria-current="page">
+      <span class="icon" aria-hidden="true">👤</span> کارمندان
+    </button>
+    <button class="nav-item" data-section="contracts">
+      <span class="icon" aria-hidden="true">📄</span> قراردادها
+    </button>
+    <button class="nav-item" data-section="leaves">
+      <span class="icon" aria-hidden="true">🗓</span> مرخصی‌ها
+    </button>
+  </nav>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- ── Employees ── -->
+    <section class="section active" id="section-employees" aria-labelledby="title-employees">
+      <div class="section-header">
+        <h1 class="section-title" id="title-employees">کارمندان</h1>
+        <button class="btn btn--primary" id="btn-add-employee">+ افزودن کارمند</button>
+      </div>
+      <div class="stats" id="employee-stats">
+        <div class="stat-card"><div class="stat-card__label">تعداد کارمندان</div><div class="stat-card__value" id="stat-emp-count">—</div></div>
+        <div class="stat-card"><div class="stat-card__label">فعال</div><div class="stat-card__value" id="stat-emp-active" style="color:var(--succcard"><div class="stat-card__label">مجموع حموع حقوق (ریال)</div><div class="stat-card__value" id="stat-emp-salary">—</div></div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table aria-label="جدول کارمندان">
+            <thead>
+              <tr>
+                <th>نام</th><th>کد ملی</th><th>بخش</th><th>حقوق (ریال)</th><th>وضعیت</th><th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody id="employees-tbody">
+              <tr><td colspan="6" style="text-align:center;padding:var(--space-6);color:var(--text-muted)">در حال بارگذاری…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Contracts ── -->
+    <section class="section" id="section-contracts" aria-labelledby="title-contracts">
+      <div class="section-header">
+        <h1 class="section-title" id="title-contracts">قراردادها</h1>
+        <button class="btn btn--primary" id="btn-add-contract">+ افزودن قرارداد</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table aria-label="جدول قراردادها">
+            <thead>
+              <tr><th>کارمند</th><th>نوع قرارداد</th><th>تاریخ شروع</th><th>تاریخ پایان</th><th>وضعیت</th><th>عملیات</th></tr>
+            </thead>
+            <tbody id="contracts-tbody">
+              <tr><td colspan="6" style="text-align:center;padding:var(--space-6);color:var(--text-muted)">در حال بارگذاری…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Leaves ── -->
+    <section class="section" id="section-leaves" aria-labelledby="title-leaves">
+      <div class="section-header">
+        <h1 class="section-title" id="title-leaves">مرخصی‌ها</h1>
+        <button class="btn btn--primary" id="btn-add-leave">+ ثبت مرخصی</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table aria-label="جدول مرخصی‌ها">
+            <thead>
+              <tr><th>کارمند</th><th>نوع</th><th>از تاریخ</th><th>تا تاریخ</th><th>وضعیت</th><th>عملیات</th></tr>
+            </thead>
+            <tbody id="leaves-tbody">
+              <tr><td colspan="6" style="text-align:center;padding:var(--space-6);color:var(--text-muted)">در حال بارگذاری…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── Modal: Employee ── -->
+<div class="modal-backdrop" id="modal-employee" role="dialog" aria-modal="true" aria-labelledby="modal-employee-title">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-employee-title">افزودن کارمند</span>
+      <button class="modal-close" aria-label="بستن" data-close="modal-employee">×</button>
+    </div>
+    <form id="form-employee" novalidate>
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="emp-name">نام و نام خانوادگی *</label>
+          <input type="text" id="emp-name" name="name" required autocomplete="name" />
+          <span class="field-error">نام الزامی است</span>
+        </div>
+        <div class="form-field">
+          <label for="emp-national-id">کد ملی *</label>
+          <input type="text" id="emp-national-id" name="national_id" required maxlength="10" pattern="\d{10}" />
+          <span class="field-error">کد ملی ۱۰ رقمی الزامی است</span>
+        </div>
+        <div class="form-field">
+          <label for="emp-department">بخش</label>
+          <select id="emp-department" name="department">
+            <option value="">انتخاب کنید</option>
+            <option>مالی</option><option>فروش</option><option>منابع انسانی</option><option>فناوری اطلاعات</option><option>تولید</option><option>انبار</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="emp-salary">حقوق پایه (ریال) *</label>
+          <input type="number" id="emp-salary" name="salary" required min="0" />
+          <span class="field-error">حقوق الزامی است</span>
+        </div>
+        <div class="form-field">
+          <label for="emp-phone">شماره تماس</label>
+          <input type="tel" id="emp-phone" name="phone" />
+        </div>
+        <div class="form-field">
+          <label for="emp-status">وضعیت</label>
+          <select id="emp-status" name="status">
+            <option value="active">فعال</option>
+            <option value="inactive">غیرفعال</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn--ghost" data-close="modal-employee">انصراف</button>
+        <button type="submit" class="btn btn--primary">ذخیره</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Modal: Contract ── -->
+<div class="modal-backdrop" id="modal-contract" role="dialog" aria-modal="true" aria-labelledby="modal-contract-title">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-contract-title">افزودن قرارداد</span>
+      <button class="modal-close" aria-label="بستن" data-close="modal-contract">×</button>
+    </div>
+    <form id="form-contract" novalidate>
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="contract-employee">کارمند *</label>
+          <select id="contract-employee" name="employee_id" required>
+            <option value="">انتخاب کنید</option>
+          </select>
+          <span class="field-error">انتخاب کارمند الزامی است</span>
+        </div>
+        <div class="form-field">
+          <label for="contract-type">نوع قرارداد *</label>
+          <select id="contract-type" name="contract_type" required>
+            <option value="">انتخاب کنید</option>
+            <option value="permanent">دائمی</option>
+            <option value="temporary">موقت</option>
+            <option value="part_time">پاره وقت</option>
+            <option value="project">پروژه‌ای</option>
+          </select>
+          <span class="field-error">نوع قرارداد الزامی است</span>
+        </div>
+        <div class="form-field">
+          <label for="contract-start">تاریخ شروع *</label>
+          <input type="date" id="contract-start" name="start_date" required />
+          <span class="field-error">تاریخ شروع الزامی است</span>
+        </div>
+        <div class="form-field">
+          <label for="contract-end">تاریخ پایان</label>
+          <input type="date" id="contract-end" name="end_date" />
+        </div>
+        <div class="form-field">
+          <label for="contract-amount">مبلغ (ریال)</label>
+          <input type="number" id="contract-amount" name="amount" min="0" />
+        </div>
+        <div class="form-field">
+          <label for="contract-status">وضعیت</label>
+          <select id="contract-status" name="status">
+            <option value="active">فعال</option>
+            <option value="expired">منقضی</option>
+            <option value="terminated">فسخ شده</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn--ghost" data-close="modal-contract">انصراف</button>
+        <button type="submit" class="btn btn--primary">ذخیره</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Modal: Leave ── -->
+<div class="modal-backdrop" id="modal-leave" role="dialog" aria-modal="true" aria-labelledby="modal-leave-title">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-leave-title">ثبت مرخصی</span>
+      <button class="modal-close" aria-label="بستن" data-close="modal-leave">×</button>
+    </div>
+    <form id="form-leave" novalidate>
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="leave-employee">کارمند *</label>
+          <select id="leave-employee" name="employee_id" required>
+            امی است</span>
+         کنید</option>
+          </select>
+          <span class="field-error">انتخاب کارمند الزامی است</span>
+        </div>
+        <div class="form-field">
+          <label for="leave-type">نوع مرخصی *</label>
+          <select id="leave-type" name="leave_type" required>
+            <option value="">انتخاب کنید</option>
+            <option value="annual">سالانه</option>
+            <option value="sick">استعلاجی</option>
+            <option value="emergency">اضطراری</option>
+            <option value="unpaid">بدون حقوق</option>
+          </select>
+          <span class="field-error">نوع مرخصی الزامی است</span>
+        </div>
+        <div class="form-field">
+          <label for="leave-fr
+          <span class="field-error">تاریخ شروع الزامی است</spte" id="leave-from" name="start_date" required />
+          <span class="field-error">تاریخ شروع الزامی است</span>
+        </div>
+        <div class="form-field">
+          <label for="leave-to">تا تاریخ *</label>
+          <input type="date" id="leave-to" name="end_date" required />
+          <span class="field-error">تاریخ پایان الزامی است</span>
+        </div>
+        <div class="form-field" style="grid-column:1/-1">
+          <label for="leave-reason">توضیحات</label>
+          <textarea id="leave-reason" name="reason" rows="3"></textarea>
+        </div>
+        <div class="form-field">
+          <label for="leave-status">وضعیت</label>
+          <select id="leave-status" name="status">
+            <option value="pending">در انتظار تأیید</option>
+            <option value="approved">تأیید شده</option>
+            <option value="rejected">رد شده</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn--ghost" data-close="modal-leave">انصراف</button>
+        <button type="submit" class="btn btn--primary">ثبت</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+/* ─── Config ──────────────────────────────────────────────────────────────── */
+const API = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : '').replace(/\/$/, '');
+
+/* ─── Utilities ───────────────────────────────────────────────────────────── */
+const $ = (sel, ctx = document) => ctx.querySelector(sel);
+const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+const fmt = n => Number(n).toLocaleString('fa-IR');
+
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast toast--${type}`;
+  el.textContent = msg;
+  $('#toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  if (!res.ok) throw new Error(await res.text());
+  return res.status === 204 ? null : res.json();
+}
+
+function statusBadge(status) {
+  const map = {
+    active:    ['success', 'فعال'],
+    inactive:  ['warning', 'غیرفعال'],
+    approved:  ['success', 'تأیید'],
+    pending:   ['warning', 'در انتظار'],
+    rejected:  ['danger',  'رد شده'],
+    expired:   ['warning', 'منقضی'],
+    terminated:['danger',  'فسخ'],
+    permanent: ['info',    'دائمی'],
+    temporary: ['info',    'موقت'],
+    part_time: ['info',    'پاره وقت'],
+    project:   ['info',    'پروژه‌ای'],
+    annual:    ['info',    'سالانه'],
+    sick:      ['warning', 'استعلاجی'],
+    emergency: ['danger',  'اضطراری'],
+    unpaid:    ['warning', 'بدون حقوق'],
+  };
+  const [cls, label] = map[status] || ['info', status];
+  return `<span class="badge badge--${cls}">${label}</span>`;
+}
+
+/* ─── Navigation ──────────────────────────────────────────────────────────── */
+$$('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('.nav-item').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
+    btn.classList.add('active'); btn.setAttribute('aria-current', 'page');
+    $$('.section').forEach(s => s.classList.remove('active'));
+    $(`#section-${btn.dataset.section}`).classList.add('active');
+    if (btn.dataset.section === 'employees') loadEmployees();
+    if (btn.dataset.section === 'contracts') loadContracts();
+    if (btn.dataset.section === 'leaves')    loadLeaves();
+  });
+});
+
+/* ─── Modal helpers ───────────────────────────────────────────────────────── */
+function openModal(id)id) { $(`#${id}`).classList.remove('open'); }
+
+documenid}`).classList.add('open'); }
+function closeModal(id) { $(`#${id}`).classList.remove('open'); }
+
+document.addEventListener('click', e => {
+  if (e.target.dataset.close) closeModal(e.target.dataset.close);
+  if (e.target.classList.contains('modal-backdrop')) closeModal(e.target.id);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') $$('.modal-backdrop.open').forEach(m => closeModal(m.id));
+});
+
+/* ─── Validation ──────────────────────────────────────────────────────────── */
+function validate(form) {
+  let ok = true;
+  form.querySelectorAll('[required]').forEach(el => {
+    if (!el.value.trim()) { el.classList.add('error'); ok = false; }
+    else el.classList.remove('error');
+  });
+  return ok;
+}
+
+/* ─── Employee selects ────────────────────────────────────────────────────── */
+async function populateEmployeeSelects() {
+  let emps = [];
+  try { emps = await api('GET', '/employees'); } catch { return; }
+  ['contract-employee', 'leave-employee'].forEach(id => {
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">انتخاب کنید</option>';
+    emps.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.id; opt.textContent = e.name;
+      sel.appendChild(opt);
+    });
+    sel.value = cur;
+  });
+}
+
+/* ─── Employees ───────────────────────────────────────────────────────────── */
+async function loadEmployees() {
+  const tbody = $('#employees-tbody');
+  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:var(--space-6);color:var(--text-muted)">در حال بارگذاری…</td></tr>`;
+  try {
+    const data = await api('GET', '/employees');
+    const active = data.filter(e => e.status === 'active').length;
+    const totalSalary = data.reduce((s, e) => s + Number(e.salary || 0), 0);
+    $('#stat-emp-count').textContent  = data.length;
+    $('#stat-emp-active').textContent = active;
+    $('#stat-emp-salary').textContent = fmt(totalSalary);
+
+    tbody.innerHTML = data.length ? data.map(e => `
+      <tr>
+        <td>${e.name}</td>
+        <td style="font-variant-numeric:tabular-nums">${e.national_id}</td>
+        <td>${e.department || '—'}</td>
+        <td style="font-variant-numeric:tabular-nums">${fmt(e.salary)}</td>
+        <td>${statusBadge(e.status)}</td>
+        <td>
+          <button class="btn btn--ghost btn--sm"
+                  data-edit-emp="${e.id}"
+                  data-emp='${JSON.stringify(e).replace(/'/g, '&#39;')}'>ویرایش</button>
+          <button class="btn btn--danger-ghost btn--sm"
+                  data-del-emp="${e.id}" style="margin-right:4px">حذف</button>
+        </td>
+      </tr>`).join('')
+    : `<tr><td colspan="6" style="text-align:center;padding:var(--space-6);color:var(--text-muted)">کارمندی ثبت نشده است.</td></tr>`;
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:var(--space-6);color:var(--danger)">خطا در بارگذاری: ${err.message}</td></tr>`;
+  }
+}
+
+$('#btn-add-employee').addEventListener('click', () => {
+  $('#form-employee').reset();
+  $('#form-employee').dataset.editId = '';
+  $('#modal-employee-title').textContent = 'افزودن کارمند';
+  openModal('modal-employee');
+});
+
+$('#form-employe => {
+  e.preventDefault();
+  if (!validate(e.target)) return;
+  const body = Object.fromEntries(new FormData(e.target). FormData(e.target).entries());
+  const editId = e.target.dataset.editId;
+  try {
+    if (editId) await api('PUT', `/employees/${editId}`, body);
+    else        await api('POST', '/employees', body);
+    toast(editId ? 'اطلاعات کارمند ویرایش شد' : 'کارمند با موفقیت اضافه شد', 'success');
+    closeModal('modal-employee');
+    loadEmployees();
+  } catch (err) { toast('خطا: ' + err.message, 'danger'); }
+});
+
+/* ─── Delegated edit / delete ─────────────────────────────────────────────── */
+document.addEventListener('click', async e => {
+  const t = e.target;
+
+  if (t.dataset.editEmp) {
+    const emp = JSON.parse(t.dataset.emp);
+    const form = $('#form-employee');
+    form.dataset.editId = emp.id;
+    $('#modal-employee-title').textContent = 'ویرایش کارمند';
+    Object.entries(emp).forEach(([k, v]) => { const el = form.elements[k]; if (el) el.value = v ?? ''; });
+    openModal('modal-employee');
+  }
+
+  if (t.dataset.delEmp) {
+    if (!confirm('آیا از حذف این کارمند مطمئن هستید؟')) return;
+    try {
+      await api('DELETE', `/employees/${t.dataset.delEmp}`);
+      toast('کارمند حذف شد', 'success');
+      loadEmployees();
+    } catch (err) { toast('خطا: ' + err.message, 'danger'); }
+  }
+
+  if (t.dataset.editContract) {
+    const c = JSON.parse(t.dataset.contract);
+    const form = $('#form-contract');
+    form.dataset.editId = c.id;
+    $('#modal-contract-title').textContent = 'ویرایش قرارداد';
+    await populateEmployeeSelects();
+    Object.entries(c).forEach(([k, v]) => { const el = form.elements[k]; if (el) el.value = v ?? ''; });
+    openModal('modal-contract');
+  }
+
+  if (t.dataset.delContract) {
+    if (!confirm('حذف این قرارداد؟')) return;
+    try {
+      await api('DELETE', `/contracts/${t.dataset.delContract}`);
+      toast('قرارداد حذف شد', 'success');
+      loadContracts();
+    } catch (err) { toast('خطا: ' + err.message, 'danger'); }
+  }
+
+  if (t.dataset.editLeave) {
+    const l = JSON.parse(t.dataset.leave);
+    const form = $('#form-leave');
+    form.dataset.editId = l.id;
+    $('#modal-leave-title').textContent = 'ویرایش مرخصی';
+    await populateEmployeeSelects();
+    Object.entries(l).forEach(([k, v]) => { const el = form.elements[k]; if (el) el.value = v ?? ''; });
+    openModal('modal-leave');
+  }
+
+  if (t.dataset.delLeave) {
+    if (!confirm('حذف این مرخصی؟')) return;
+    try {
+      await api('DELETE', `/leaves/${t.dataset.delLeave}`);
+      toast('مرخصی حذف شد', 'success');
+      loadLeaves();
+    } catch (err) { toast('خطا: ' + err.message, 'danger'); }
+  }
+});
+
+/* ─── Contracts ───────────────────────────────────────────────────────────── */
+async function loadContracts() {
+  const tbody = $('#contracts-tbody');
+  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:var(--space-6);color:var(--text-muted)">در حال بارگذاری…</td></tr>`;
+  try {
+    const [data, emps] = await Promise.all([api('GET', '/contracts'), api('GET', '/employees')]);
+    const empMap  = Object.fromEntries(emps.map(e => [e.id, e.name]));
+    const typeMap = { permanent:'دائمی', temporary:'موقت', part_time:'پاره وقت', project:'پروژه‌ای' };
+    tbody.innerHTML = data.length ? data.map(c => `
+      <tr>
+        <td>${empMap[c.employee_id] || c.employee_id}</td>
+        <td>${typeMap[c.contract_type] || c.contract_type}</td>
+        <td>${c.start_date || '—'}</td>
+        <td>${c.end_date   || '—'}</td>
+        <td>${statusBadge(c.status)}</td>
+        <td>
+          <button class="btn btn--ghost btn--sm"
+                  data-edit-contract="${c.id}"
+                  data-contract='${JSON.stringify(c).replace(/'/g, '&#39;')}'>ویرایش</button>
+          <button class="btn btn--danger-ghost btn--sm"
+                  data-del-contract="${c.id}" style="margin-right:4px">حذف</button>
+        </td>
+      </tr>`).join('')
+    : `<tr><td colspan="6" style="text-align:center;padding:var(--space-6);color:var(--text-muted)">قراردادی ثبت نشده است.</td></tr>`;
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:var(--space-6);color:var(--danger)">خطا: ${err.message}</td></tr>`;
+  }
+}
+
+$('#btn-add-contract').addEventListener('click', async () => {
+  $('#form-contract').reset();
+  $('#form-contract').dataset.editId = '';
+  $('#modal-contract-title').textContent = 'افزودن قرارداد';
+  await populateEmployeeSelects();
+  openModal('modal-contract');
+});
+
+$('#form-contract').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!validate(e.target)) return;
+  const body   = Object.fromEntries(new FormData(e.target).entries());
+  const editId = e.target.dataset.editId;
+  try {
+    if (editId) await api('PUT', `/contracts/${editId}`, body);
+    else        await api('POST', '/contracts', body);
+    toast(editId ? 'قرارداد ویرایش شد' : 'قرارداد ثبت شد', 'success');
+    closeModal('modal-contract');
+    loadContracts();
+  } catch (err) { toast('خطا: ' + err.message, 'danger'); }
+});
+
+/* ─── Leaves ──────────────────────────────────────────────────────────────── */
+async function loadLeaves() {
+  const tbody = $('#leaves-tbody');
+  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:var(--space-6);color:var(--text-muted)">در حال بارگذاری…</td></tr>`;
+  try {
+    const [data, emps] = await Promise.all([api('GET', '/leaves'), api('GET', '/employees')]);
+    const empMap  = Object.fromEntries(emps.map(e => [e.id, e.name]));
+    const typeMap = { annual:'سالانه', sick:'استعلاجی', emergency:'اضطراری', unpaid:'بدون حقوق' };
+    tbody.innerHTML = data.length ? data.map(l => `
+      <tr>
+        <td>${empMap[l.employee_id] || l.employee_id}</td>
+        <td>${typeMap[l.leave_type] || l.leave_type}</td>
+        <td>${l.start_date || '—'}</td>
+        <td>${l.end_date   || '—'}</td>
+        <td>${statusBadge(l.status)}</td>
+        <td>
+          <button class="btn btn--ghost btn--sm"
+                  data-edit-leave="${l.id}"
+                  data-leave='${JSON.stringify(l).replace(/'/g, '&#39;')}'>ویرایش</button>
+          <button class="btn btn--danger-ghost btn--sm"
+                  data-del-leave="${l.id}" style="margin-right:4px">حذف</button>
+        </td>
+      </tr>`).join('')
+    : `<tr><td colspan="6" style="text-align:center;padding:var(--space-6);color:var(--text-muted)">مرخصی‌ای ثبت نشده است.</td></tr>`;
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:var(--space-6);color:var(--danger)">خطا: ${err.message}</td></tr>`;
+  }
+}
+
+$('#btn-add-leave').addEventListener('click', async () => {
+  $('#form-leave').reset();
+  $('#form-leave').dataset.editId = '';
+  $('#modal-leave-title').textContent = 'ثبت مرخصی';
+  await populateEmployeeSelects();
+  openModal('modal-leave');
+});
+
+$('#form-leave').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!validate(e.target)) return;
+  const body   = Object.fromEntries(new FormData(e.target).entries());
+  const editId = e.target.dataset.editId;
+  try {
+    if (editId) await api('PUT', `/leaves/${editId}`, body);
+    else        await api('POST', '/leaves', body);
+    toast(editId ? 'مرخصی ویرایش شد' : 'مرخصی ثبت شد', 'success');
+    closeModal('modal-leave');
+    loadLeaves();
+  } catch (err) { toast('خطا: ' + err.message, 'danger'); }
+});
+
+/* ─── Boot ────────────────────────────────────────────────────────────────── */
+loadEmployees();
+</script>
+</body>
+</html>
